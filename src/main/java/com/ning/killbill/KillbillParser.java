@@ -17,7 +17,7 @@ public class KillbillParser {
 
     public static void main(String[] args) throws Exception {
 
-        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/SimpleEnum");
+        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/SimpleClass");
         JavaLexer lexer = new JavaLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JavaParser parser = new JavaParser(tokens);

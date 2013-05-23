@@ -18,6 +18,7 @@ import com.ning.killbill.JavaParser.FormalParametersContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
+import com.ning.killbill.JavaParser.ModifierContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
 import com.ning.killbill.JavaParser.TypeContext;
 import com.ning.killbill.objects.Argument;
@@ -34,6 +35,7 @@ public class KillbillListener extends JavaBaseListener {
 
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
     private Method currentMethod;
+    private List<String> currentModifiers;
 
 
     private final Map<String, String> allImports;
@@ -48,7 +50,9 @@ public class KillbillListener extends JavaBaseListener {
         this.allImports = new HashMap<String, String>();
         this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
         this.currentMethod = null;
-        packageName = null;
+        this.currentModifiers = null;
+        this.packageName = null;
+
     }
 
     public List<ClassEnumOrInterface> getAllClassesEnumOrInterfaces() {
@@ -135,7 +139,6 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-
     @Override
     public void exitClassDeclaration(ClassDeclarationContext ctx) {
         if (ctx.normalClassDeclaration() != null) {
@@ -158,16 +161,39 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Exiting exitInterfaceMethodOrFieldDecl" + ctx.getText());
     }
 
+
+    @Override
+    public void enterClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx) {
+        log.debug("** Entering enterClassBodyDeclaration" + ctx.getText());
+        if (ctx.modifiers() != null && ctx.modifiers().modifier().size() > 0) {
+            currentModifiers = new ArrayList<String>();
+            for (ModifierContext cur : ctx.modifiers().modifier()) {
+                currentModifiers.add(cur.getText());
+            }
+        }
+    }
+
+    @Override
+    public void exitClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx) {
+        log.debug("** Exiting exitClassBodyDeclaration" + ctx.getText());
+        currentModifiers = null;
+    }
+
+
     @Override
     public void enterMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
         log.debug("** Entering enterMethodDeclaration" + ctx.getText());
-        currentMethod = new Method(ctx.Identifier().getText());
+        if (!isIncludedInModifier("private", "protected")) {
+            currentMethod = new Method(ctx.Identifier().getText());
+        }
     }
 
     @Override
     public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
-        currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
-        currentMethod = null;
+        if (currentMethod != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
+            currentMethod = null;
+        }
         log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
     }
 
@@ -198,30 +224,6 @@ public class KillbillListener extends JavaBaseListener {
         }
     }
 
-
-
-    /*
-
-    @Override
-    public void enterType(JavaParser.TypeContext ctx) {
-
-        final String type = ctx.classOrInterfaceType().getText();
-
-        // We are in the context of interface declaration
-        if (currentMethod == null) {
-            final ClassEnumOrInterface current = currentClassesEnumOrInterfaces.peekFirst();
-            if (current.isInterface()) {
-                current.addSuperInterface(fullyQualifiedType);
-            }
-        }
-    }
-    */
-
-    @Override
-    public void exitType(TypeContext ctx) {
-    }
-
-
     @Override
     public String toString() {
 
@@ -241,6 +243,19 @@ public class KillbillListener extends JavaBaseListener {
         return tmp.toString();
     }
 
+    private boolean isIncludedInModifier(final String... modifiers) {
+        if (currentModifiers == null) {
+            return false;
+        }
+        for (String cur : currentModifiers) {
+            for (String m : modifiers)
+                if (cur.equals(m)) {
+                    return true;
+                }
+        }
+        return false;
+    }
+
     private String getFullyQualifiedType(final String type) {
 
         // Is already fully qualified?
@@ -258,7 +273,7 @@ public class KillbillListener extends JavaBaseListener {
         try {
 
             final String className = JAVA_LANG + type;
-            Class clz = Class.forName(className);
+            Class.forName(className);
             return className;
         } catch (ClassNotFoundException ignore) {
         }

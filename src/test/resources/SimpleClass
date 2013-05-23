@@ -85,4 +85,12 @@ public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
         result = 31 * result + (isUpdatable != null ? isUpdatable.hashCode() : 0);
         return result;
     }
+
+    protected String privateShouldBeIgnored(Object foo) {
+        return foo.toString();
+    }
+
+    private String privateShouldBeIgnored(Object foo) {
+        return foo.toString();
+    }
 }
