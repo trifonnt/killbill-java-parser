@@ -1,18 +1,12 @@
 package com.ning.killbill;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 
 import org.testng.annotations.Test;
 
 import com.ning.killbill.objects.Argument;
-import com.ning.killbill.objects.ClassOrInterface;
+import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Method;
-
-import com.google.common.io.Resources;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -26,12 +20,14 @@ public class TestSimpleClass extends TestBase {
 
 
         assertEquals(listener.getPackageName(), "com.ning.billing.payment.api");
-        final List<ClassOrInterface> classesorInterfaces = listener.getAllClassesOrInterfaces();
+        final List<ClassEnumOrInterface> classesorInterfaces = listener.getAllClassesEnumOrInterfaces();
         assertEquals(classesorInterfaces.size(), 1);
 
-        final ClassOrInterface testClass = classesorInterfaces.get(0);
+        final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         assertEquals(testClass.getName(), "PaymentMethodKVInfo");
         assertEquals(testClass.isInterface(), false);
+        assertEquals(testClass.isEnum(), false);
+        assertEquals(testClass.isClass(), true);
 
         assertEquals(testClass.getSuperInterfaces().size(), 2);
         isSuperInterfaceDefined("com.ning.billing.payment.api.Bar", testClass.getSuperInterfaces());
@@ -80,9 +76,7 @@ public class TestSimpleClass extends TestBase {
 
 
     @Override
-    public String getResourceFileName() throws IOException, URISyntaxException {
-        URL resource = Resources.getResource("SimpleClass");
-        File resourceFile = new File(resource.toURI());
-        return resourceFile.getAbsolutePath();
+    public String getResourceName() {
+        return "SimpleClass";
     }
 }

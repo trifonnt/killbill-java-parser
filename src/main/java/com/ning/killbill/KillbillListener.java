@@ -12,16 +12,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
+import com.ning.killbill.JavaParser.EnumConstantContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
 import com.ning.killbill.JavaParser.FormalParametersContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
-import com.ning.killbill.JavaParser.InterfaceBodyDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
 import com.ning.killbill.JavaParser.TypeContext;
 import com.ning.killbill.objects.Argument;
-import com.ning.killbill.objects.ClassOrInterface;
+import com.ning.killbill.objects.ClassEnumOrInterface;
+import com.ning.killbill.objects.ClassEnumOrInterface.ClassEnumOrInterfaceType;
 import com.ning.killbill.objects.Method;
 
 import com.google.common.base.Joiner;
@@ -31,7 +32,7 @@ public class KillbillListener extends JavaBaseListener {
     public static final String JAVA_LANG = "java.lang.";
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
 
-    private final Deque<ClassOrInterface> currentClassesOrInterfaces;
+    private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
     private Method currentMethod;
 
 
@@ -39,19 +40,19 @@ public class KillbillListener extends JavaBaseListener {
 
 
     private String packageName;
-    private final List<ClassOrInterface> allClassesOrInterfaces;
+    private final List<ClassEnumOrInterface> allClassesEnumOrInterfaces;
 
 
     public KillbillListener() {
-        this.allClassesOrInterfaces = new ArrayList<ClassOrInterface>();
+        this.allClassesEnumOrInterfaces = new ArrayList<ClassEnumOrInterface>();
         this.allImports = new HashMap<String, String>();
-        this.currentClassesOrInterfaces = new ArrayDeque<ClassOrInterface>();
+        this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
         this.currentMethod = null;
         packageName = null;
     }
 
-    public List<ClassOrInterface> getAllClassesOrInterfaces() {
-        return allClassesOrInterfaces;
+    public List<ClassEnumOrInterface> getAllClassesEnumOrInterfaces() {
+        return allClassesEnumOrInterfaces;
     }
 
     public String getPackageName() {
@@ -78,11 +79,11 @@ public class KillbillListener extends JavaBaseListener {
     public void enterInterfaceDeclaration(InterfaceDeclarationContext ctx) {
         log.debug("** Entering enterInterfaceDeclaration " + ctx.getText());
 
-        final ClassOrInterface classOrInterface = new ClassOrInterface(ctx.normalInterfaceDeclaration().Identifier().getText(), true);
-        currentClassesOrInterfaces.push(classOrInterface);
+        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalInterfaceDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.INTERFACE);
+        currentClassesEnumOrInterfaces.push(classEnumOrInterface);
         if (ctx.normalInterfaceDeclaration().typeList() != null) {
             for (TypeContext cur : ctx.normalInterfaceDeclaration().typeList().type()) {
-                classOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+                classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
             }
         }
     }
@@ -90,8 +91,8 @@ public class KillbillListener extends JavaBaseListener {
     @Override
     public void exitInterfaceDeclaration(InterfaceDeclarationContext ctx) {
 
-        final ClassOrInterface ifce = currentClassesOrInterfaces.pop();
-        allClassesOrInterfaces.add(ifce);
+        final ClassEnumOrInterface ifce = currentClassesEnumOrInterfaces.pop();
+        allClassesEnumOrInterfaces.add(ifce);
         log.debug("** Exiting enterInterfaceDeclaration " + ctx.getText());
 
     }
@@ -100,24 +101,47 @@ public class KillbillListener extends JavaBaseListener {
     @Override
     public void enterClassDeclaration(ClassDeclarationContext ctx) {
         log.debug("** Entering enterClassDeclaration " + ctx.getText());
-        final ClassOrInterface classOrInterface = new ClassOrInterface(ctx.normalClassDeclaration().Identifier().getText(), false);
-        currentClassesOrInterfaces.push(classOrInterface);
-        final TypeContext superClass = ctx.normalClassDeclaration().type();
-        if (superClass != null) {
-            classOrInterface.addSuperClass(getFullyQualifiedType(superClass.getText()));
-        }
-        if (ctx.normalClassDeclaration().typeList() != null) {
-            for (TypeContext cur : ctx.normalClassDeclaration().typeList().type()) {
-                classOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+        if (ctx.normalClassDeclaration() != null) {
+            final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalClassDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.CLASS);
+            currentClassesEnumOrInterfaces.push(classEnumOrInterface);
+            final TypeContext superClass = ctx.normalClassDeclaration().type();
+            if (superClass != null) {
+                classEnumOrInterface.addSuperClass(getFullyQualifiedType(superClass.getText()));
+            }
+            if (ctx.normalClassDeclaration().typeList() != null) {
+                for (TypeContext cur : ctx.normalClassDeclaration().typeList().type()) {
+                    classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+                }
             }
         }
     }
 
+    @Override
+    public void enterEnumDeclaration(JavaParser.EnumDeclarationContext ctx) {
+        log.debug("** Entering enterEnumDeclaration " + ctx.getText());
+
+        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.Identifier().getText(), ClassEnumOrInterfaceType.ENUM);
+        currentClassesEnumOrInterfaces.push(classEnumOrInterface);
+        final List<EnumConstantContext> enumValues = ctx.enumBody().enumConstants().enumConstant();
+        for (EnumConstantContext cur : enumValues) {
+            classEnumOrInterface.addEnumValue(cur.getText());
+        }
+    }
+
+    @Override
+    public void exitEnumDeclaration(JavaParser.EnumDeclarationContext ctx) {
+        final ClassEnumOrInterface claz = currentClassesEnumOrInterfaces.pop();
+        allClassesEnumOrInterfaces.add(claz);
+    }
+
+
 
     @Override
     public void exitClassDeclaration(ClassDeclarationContext ctx) {
-        final ClassOrInterface claz = currentClassesOrInterfaces.pop();
-        allClassesOrInterfaces.add(claz);
+        if (ctx.normalClassDeclaration() != null) {
+            final ClassEnumOrInterface claz = currentClassesEnumOrInterfaces.pop();
+            allClassesEnumOrInterfaces.add(claz);
+        }
     }
 
 
@@ -129,7 +153,7 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void exitInterfaceMethodOrFieldDecl(InterfaceMethodOrFieldDeclContext ctx) {
-        currentClassesOrInterfaces.peekFirst().addMethod(currentMethod);
+        currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
         currentMethod = null;
         log.debug("** Exiting exitInterfaceMethodOrFieldDecl" + ctx.getText());
     }
@@ -142,7 +166,7 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
-        currentClassesOrInterfaces.peekFirst().addMethod(currentMethod);
+        currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
         currentMethod = null;
         log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
     }
@@ -185,7 +209,7 @@ public class KillbillListener extends JavaBaseListener {
 
         // We are in the context of interface declaration
         if (currentMethod == null) {
-            final ClassOrInterface current = currentClassesOrInterfaces.peekFirst();
+            final ClassEnumOrInterface current = currentClassesEnumOrInterfaces.peekFirst();
             if (current.isInterface()) {
                 current.addSuperInterface(fullyQualifiedType);
             }
@@ -210,7 +234,7 @@ public class KillbillListener extends JavaBaseListener {
         }
 
 
-        for (ClassOrInterface cur : allClassesOrInterfaces) {
+        for (ClassEnumOrInterface cur : allClassesEnumOrInterfaces) {
             tmp.append("\n******* INTERFACES/CLASSES **********");
             tmp.append(cur);
         }
@@ -220,7 +244,7 @@ public class KillbillListener extends JavaBaseListener {
     private String getFullyQualifiedType(final String type) {
 
         // Is already fully qualified?
-        String [] parts = type.split("\\.");
+        String[] parts = type.split("\\.");
         if (parts.length > 1) {
             return type;
         }
@@ -231,7 +255,7 @@ public class KillbillListener extends JavaBaseListener {
         }
 
         // If not, is that a java.lang?
-        try  {
+        try {
 
             final String className = JAVA_LANG + type;
             Class clz = Class.forName(className);

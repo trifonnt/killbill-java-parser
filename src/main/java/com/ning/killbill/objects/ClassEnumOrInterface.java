@@ -3,22 +3,32 @@ package com.ning.killbill.objects;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ClassOrInterface {
+public final class ClassEnumOrInterface {
+
+
+    public enum ClassEnumOrInterfaceType {
+        CLASS,
+        INTERFACE,
+        ENUM
+    };
 
     private final String name;
-    private boolean isInterface;
-
+    private final ClassEnumOrInterfaceType type;
     private final List<String> superInterfaces;
     private String superBaseClass;
 
+
+    private final List<String> enumValues;
+
     private final List<Method> methods;
 
-    public ClassOrInterface(final String name, final boolean anInterface) {
+    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type) {
         this.name = name;
-        this.isInterface = anInterface;
+        this.type = type;
         this.methods = new ArrayList<Method>();
         superInterfaces = new ArrayList<String>();
         superBaseClass = null;
+        enumValues = new ArrayList<String>();
     }
 
     public void addMethod(Method method) {
@@ -33,12 +43,28 @@ public final class ClassOrInterface {
         superBaseClass = claz;
     }
 
+    public void addEnumValue(String value) {
+        enumValues.add(value);
+    }
+
     public String getName() {
         return name;
     }
 
     public boolean isInterface() {
-        return isInterface;
+        return type == ClassEnumOrInterfaceType.INTERFACE;
+    }
+
+    public boolean isClass() {
+        return type == ClassEnumOrInterfaceType.CLASS;
+    }
+
+    public boolean isEnum() {
+        return type == ClassEnumOrInterfaceType.ENUM;
+    }
+
+    public List<String> getEnumValues() {
+        return enumValues;
     }
 
     public List<Method> getMethods() {
@@ -55,11 +81,12 @@ public final class ClassOrInterface {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("ClassOrInterface{");
+        final StringBuilder sb = new StringBuilder("ClassEnumOrInterface{");
         sb.append("name='").append(name).append('\'');
-        sb.append(", isInterface=").append(isInterface);
+        sb.append(", type=").append(type);
         sb.append(", superInterfaces=").append(superInterfaces);
         sb.append(", superBaseClass='").append(superBaseClass).append('\'');
+        sb.append(", enumValues=").append(enumValues);
         sb.append(", methods=").append(methods);
         sb.append('}');
         return sb.toString();

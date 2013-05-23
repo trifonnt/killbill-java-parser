@@ -1,7 +1,9 @@
 package com.ning.killbill;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
@@ -12,6 +14,8 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.testng.annotations.BeforeClass;
 
 import com.ning.killbill.objects.Method;
+
+import com.google.common.io.Resources;
 
 
 public abstract class TestBase {
@@ -50,5 +54,11 @@ public abstract class TestBase {
         return false;
     }
 
-    public abstract String getResourceFileName() throws IOException, URISyntaxException;
+    public String getResourceFileName() throws IOException, URISyntaxException {
+        URL resource = Resources.getResource(getResourceName());
+        File resourceFile = new File(resource.toURI());
+        return resourceFile.getAbsolutePath();
+    }
+
+    public abstract String getResourceName();
 }
