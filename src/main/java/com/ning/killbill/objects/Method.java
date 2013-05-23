@@ -9,7 +9,7 @@ public final class Method {
 
     private final List<Argument> orderedArguments;
 
-    Method(final String name) {
+    public Method(final String name) {
         this.name = name;
         this.orderedArguments = new ArrayList<Argument>();
     }

@@ -10,10 +10,11 @@ import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.testng.annotations.BeforeClass;
 
-import com.ning.killbill.objects.KillbillListener;
 
 
 public abstract class TestBase {
+
+    protected KillbillListener listener;
 
     @BeforeClass(groups = "fast")
     public void setup() throws IOException, URISyntaxException {
@@ -25,10 +26,8 @@ public abstract class TestBase {
         RuleContext tree = parser.compilationUnit();
 
         ParseTreeWalker walker = new ParseTreeWalker();
-        KillbillListener listener = new KillbillListener();
+        listener = new KillbillListener();
         walker.walk(listener, tree);
-        System.out.println("**** RESULT: *****");
-        System.out.println(listener.toString());
     }
 
     public abstract String getResourceFileName() throws IOException, URISyntaxException;

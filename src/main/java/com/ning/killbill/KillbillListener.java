@@ -1,4 +1,4 @@
-package com.ning.killbill.objects;
+package com.ning.killbill;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,7 +11,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ning.killbill.JavaBaseListener;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
 import com.ning.killbill.JavaParser.FormalParametersContext;
@@ -21,18 +20,23 @@ import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
 import com.ning.killbill.JavaParser.TypeContext;
+import com.ning.killbill.objects.Argument;
+import com.ning.killbill.objects.ClassOrInterface;
+import com.ning.killbill.objects.Method;
 
 import com.google.common.base.Joiner;
 
 public class KillbillListener extends JavaBaseListener {
 
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
-    
+
     private final Deque<ClassOrInterface> currentClassesOrInterfaces;
     private Method currentMethod;
 
 
     private final Map<String, String> allImports;
+
+
     private String packageName;
     private final List<ClassOrInterface> allClassesOrInterfaces;
 
@@ -43,6 +47,14 @@ public class KillbillListener extends JavaBaseListener {
         this.currentClassesOrInterfaces = new ArrayDeque<ClassOrInterface>();
         this.currentMethod = null;
         packageName = null;
+    }
+
+    public List<ClassOrInterface> getAllClassesOrInterfaces() {
+        return allClassesOrInterfaces;
+    }
+
+    public String getPackageName() {
+        return packageName;
     }
 
 

@@ -13,7 +13,7 @@ public final class ClassOrInterface {
 
     private final List<Method> methods;
 
-    ClassOrInterface(final String name, final boolean anInterface) {
+    public ClassOrInterface(final String name, final boolean anInterface) {
         this.name = name;
         this.isInterface = anInterface;
         this.methods = new ArrayList<Method>();
@@ -33,23 +33,23 @@ public final class ClassOrInterface {
         superBaseClasses.add(claz);
     }
 
-    private String getName() {
+    public String getName() {
         return name;
     }
 
-    private boolean isInterface() {
+    public boolean isInterface() {
         return isInterface;
     }
 
-    private List<Method> getMethods() {
+    public List<Method> getMethods() {
         return methods;
     }
 
-    private List<String> getSuperInterfaces() {
+    public List<String> getSuperInterfaces() {
         return superInterfaces;
     }
 
-    private List<String> getSuperBaseClasses() {
+    public List<String> getSuperBaseClasses() {
         return superBaseClasses;
     }
 

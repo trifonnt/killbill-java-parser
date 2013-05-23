@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import com.ning.killbill.objects.KillbillListener;
+import com.ning.killbill.KillbillListener;
 
 
 public class KillbillParser {

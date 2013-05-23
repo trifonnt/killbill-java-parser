@@ -5,16 +5,16 @@ public final class Argument {
     private final String name;
     private final String type;
 
-    Argument(final String name, final String type) {
+    public Argument(final String name, final String type) {
         this.name = name;
         this.type = type;
     }
 
-    private String getName() {
+    public String getName() {
         return name;
     }
 
-    private String getType() {
+    public String getType() {
         return type;
     }
 
