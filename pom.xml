@@ -36,6 +36,12 @@
             <version>1.7.5</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.3.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -82,10 +88,8 @@
                 <artifactId>antlr4-maven-plugin</artifactId>
                 <version>4.0</version>
                 <configuration>
-                    <sourceDirectory>src</sourceDirectory>
-                    <!--
-                  <outputDirectory>antlr4/src</outputDirectory>
-                  -->
+                  <sourceDirectory>src/main/java</sourceDirectory>
+                   <outputDirectory>target/generated-sources/antlr4</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -94,6 +98,24 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <groups>fast</groups>
+<!--
+                    <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=128m </argLine>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <systemPropertyVariables>
+                        <file.encoding>UTF-8</file.encoding>
+                        <user.timezone>UTC</user.timezone>
+                        <killbill.version>${project.version}</killbill.version>
+                    </systemPropertyVariables>
+-->
+                </configuration>
             </plugin>
 
         </plugins>

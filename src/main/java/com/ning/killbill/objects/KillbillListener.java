@@ -1,4 +1,4 @@
-package main.java.com.ning.killbill.objects;
+package com.ning.killbill.objects;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,17 +11,18 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ning.killbill.JavaBaseListener;
+import com.ning.killbill.JavaParser.ClassDeclarationContext;
+import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
+import com.ning.killbill.JavaParser.FormalParametersContext;
+import com.ning.killbill.JavaParser.ImportDeclarationContext;
+import com.ning.killbill.JavaParser.InterfaceBodyDeclarationContext;
+import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
+import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
+import com.ning.killbill.JavaParser.PackageDeclarationContext;
+import com.ning.killbill.JavaParser.TypeContext;
+
 import com.google.common.base.Joiner;
-import main.java.com.ning.killbill.grammar.JavaBaseListener;
-import main.java.com.ning.killbill.grammar.JavaParser.ClassDeclarationContext;
-import main.java.com.ning.killbill.grammar.JavaParser.FormalParameterDeclsRestContext;
-import main.java.com.ning.killbill.grammar.JavaParser.FormalParametersContext;
-import main.java.com.ning.killbill.grammar.JavaParser.ImportDeclarationContext;
-import main.java.com.ning.killbill.grammar.JavaParser.InterfaceBodyDeclarationContext;
-import main.java.com.ning.killbill.grammar.JavaParser.InterfaceDeclarationContext;
-import main.java.com.ning.killbill.grammar.JavaParser.InterfaceMethodOrFieldDeclContext;
-import main.java.com.ning.killbill.grammar.JavaParser.PackageDeclarationContext;
-import main.java.com.ning.killbill.grammar.JavaParser.TypeContext;
 
 public class KillbillListener extends JavaBaseListener {
 

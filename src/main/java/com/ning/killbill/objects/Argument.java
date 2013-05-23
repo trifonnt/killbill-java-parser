@@ -1,4 +1,4 @@
-package main.java.com.ning.killbill.objects;
+package com.ning.killbill.objects;
 
 public final class Argument {
 
