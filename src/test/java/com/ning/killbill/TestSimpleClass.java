@@ -36,7 +36,7 @@ public class TestSimpleClass extends TestBase {
         assertNotNull(testClass.getSuperBaseClass());
         assertEquals(testClass.getSuperBaseClass(), "com.ning.billing.payment.Foo");
 
-        assertEquals(testClass.getMethods().size(), 6);
+        assertEquals(testClass.getMethods().size(), 7);
 
         Method hashCode = getMethod("hashCode", testClass.getMethods());
         assertNotNull(hashCode);
@@ -72,6 +72,22 @@ public class TestSimpleClass extends TestBase {
         assertTrue(mGetKey.isGetter());
         assertEquals(mGetKey.getOrderedArguments().size(), 0);
 
+        Method meMthodWithThreeArgs = getMethod("methodWithThreeArgs", testClass.getMethods());
+        assertNotNull(meMthodWithThreeArgs);
+        assertFalse(meMthodWithThreeArgs.isGetter());
+        assertEquals(meMthodWithThreeArgs.getOrderedArguments().size(), 3);
+
+        argument = meMthodWithThreeArgs.getOrderedArguments().get(0);
+        assertEquals(argument.getType(), "java.lang.Boolean");
+        assertEquals(argument.getName(), "b");
+
+        argument = meMthodWithThreeArgs.getOrderedArguments().get(1);
+        assertEquals(argument.getType(), "java.lang.String");
+        assertEquals(argument.getName(), "s");
+
+        argument = meMthodWithThreeArgs.getOrderedArguments().get(2);
+        assertEquals(argument.getType(), "java.lang.Object");
+        assertEquals(argument.getName(), "o");
     }
 
 

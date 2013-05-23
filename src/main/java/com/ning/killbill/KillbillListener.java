@@ -18,6 +18,7 @@ import com.ning.killbill.JavaParser.FormalParametersContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
+import com.ning.killbill.JavaParser.MemberDeclContext;
 import com.ning.killbill.JavaParser.ModifierContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
 import com.ning.killbill.JavaParser.TypeContext;
@@ -197,31 +198,50 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
     }
 
+    @Override
+    public void enterVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
+        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
+        if (!isIncludedInModifier("private", "protected")) {
+             MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
+            currentMethod = new Method(meberDecl.Identifier().getText());
+        }
+
+    }
 
     @Override
-    public void enterFormalParameters(FormalParametersContext ctx) {
+    public void exitVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
+        if (currentMethod != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
+            currentMethod = null;
+        }
+        log.debug("** Exiting exitVoidMethodDeclaratorRest" + ctx.getText());
+    }
 
-        if (currentMethod == null) {
+
+    @Override public void enterFormalParameterDecls(JavaParser.FormalParameterDeclsContext ctx) {
+
+    if (currentMethod == null) {
             // For instance CTOR
             log.debug("enterFormalParameters : no curentMethod ");
             return;
         }
 
-        if (ctx.formalParameterDecls() != null) {
-            final TypeContext typeContext = ctx.formalParameterDecls().type();
+        final TypeContext typeContext = ctx.type();
 
-            if (typeContext.classOrInterfaceType().Identifier().size() > 1) {
-                log.warn("enterFormalParameters : Found " + typeContext.classOrInterfaceType().Identifier().size() + " classOrInterfaceType for argument");
-            }
-
-            final String parameterType = typeContext.classOrInterfaceType().Identifier().get(0).getText();
-            final FormalParameterDeclsRestContext formalParameterDeclsRestContext = ctx.formalParameterDecls().formalParameterDeclsRest();
-            final String parameterVariableName = formalParameterDeclsRestContext.variableDeclaratorId().Identifier().getText();
-
-            log.debug("enterFormalParameters : parameter " + parameterType + ":" + parameterVariableName);
-
-            currentMethod.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType)));
+        if (typeContext.classOrInterfaceType().Identifier().size() > 1) {
+            log.warn("enterFormalParameters : Found " + typeContext.classOrInterfaceType().Identifier().size() + " classOrInterfaceType for argument");
         }
+
+        final String parameterType = typeContext.classOrInterfaceType().Identifier().get(0).getText();
+        final FormalParameterDeclsRestContext formalParameterDeclsRestContext = ctx.formalParameterDeclsRest();
+
+
+        final String parameterVariableName = formalParameterDeclsRestContext.variableDeclaratorId().Identifier().getText();
+
+        log.debug("enterFormalParameters : parameter " + parameterType + ":" + parameterVariableName);
+
+        currentMethod.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType)));
+
     }
 
     @Override

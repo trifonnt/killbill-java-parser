@@ -43,6 +43,9 @@ public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
     }
 
 
+    public void methodWithThreeArgs(Boolean b, String s, Object o) {
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();

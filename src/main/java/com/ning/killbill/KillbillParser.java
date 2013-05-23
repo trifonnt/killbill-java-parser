@@ -1,15 +1,10 @@
 package com.ning.killbill;
 
-import java.io.File;
-import java.net.URL;
-
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-
-import com.google.common.io.Resources;
 
 
 public class KillbillParser {
@@ -23,15 +18,14 @@ public class KillbillParser {
         JavaParser parser = new JavaParser(tokens);
         parser.setBuildParseTree(true);
         RuleContext tree = parser.compilationUnit();
-/*
+
         ParseTreeWalker walker = new ParseTreeWalker();
         KillbillListener listener = new KillbillListener();
         walker.walk(listener, tree);
         System.out.println("**** RESULT: *****");
         System.out.println(listener.toString());
-  */
+
         tree.inspect(parser); // show in gui
         System.out.println(tree.toStringTree(parser));
-
     }
 }
