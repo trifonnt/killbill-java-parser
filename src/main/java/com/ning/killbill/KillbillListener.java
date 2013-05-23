@@ -28,6 +28,7 @@ import com.google.common.base.Joiner;
 
 public class KillbillListener extends JavaBaseListener {
 
+    public static final String JAVA_LANG = "java.lang.";
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
 
     private final Deque<ClassOrInterface> currentClassesOrInterfaces;
@@ -79,8 +80,10 @@ public class KillbillListener extends JavaBaseListener {
 
         final ClassOrInterface classOrInterface = new ClassOrInterface(ctx.normalInterfaceDeclaration().Identifier().getText(), true);
         currentClassesOrInterfaces.push(classOrInterface);
-        for (TypeContext cur : ctx.normalInterfaceDeclaration().typeList().type()) {
-            classOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+        if (ctx.normalInterfaceDeclaration().typeList() != null) {
+            for (TypeContext cur : ctx.normalInterfaceDeclaration().typeList().type()) {
+                classOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+            }
         }
     }
 
@@ -97,18 +100,17 @@ public class KillbillListener extends JavaBaseListener {
     @Override
     public void enterClassDeclaration(ClassDeclarationContext ctx) {
         log.debug("** Entering enterClassDeclaration " + ctx.getText());
-        currentClassesOrInterfaces.push(new ClassOrInterface(ctx.getText(), false));
-
-    }
-
-    @Override
-    public void enterInterfaceBodyDeclaration(InterfaceBodyDeclarationContext ctx) {
-
-    }
-
-    @Override
-    public void exitInterfaceBodyDeclaration(InterfaceBodyDeclarationContext ctx) {
-
+        final ClassOrInterface classOrInterface = new ClassOrInterface(ctx.normalClassDeclaration().Identifier().getText(), false);
+        currentClassesOrInterfaces.push(classOrInterface);
+        final TypeContext superClass = ctx.normalClassDeclaration().type();
+        if (superClass != null) {
+            classOrInterface.addSuperClass(getFullyQualifiedType(superClass.getText()));
+        }
+        if (ctx.normalClassDeclaration().typeList() != null) {
+            for (TypeContext cur : ctx.normalClassDeclaration().typeList().type()) {
+                classOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+            }
+        }
     }
 
 
@@ -129,13 +131,29 @@ public class KillbillListener extends JavaBaseListener {
     public void exitInterfaceMethodOrFieldDecl(InterfaceMethodOrFieldDeclContext ctx) {
         currentClassesOrInterfaces.peekFirst().addMethod(currentMethod);
         currentMethod = null;
+        log.debug("** Exiting exitInterfaceMethodOrFieldDecl" + ctx.getText());
     }
+
+    @Override
+    public void enterMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
+        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
+        currentMethod = new Method(ctx.Identifier().getText());
+    }
+
+    @Override
+    public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
+        currentClassesOrInterfaces.peekFirst().addMethod(currentMethod);
+        currentMethod = null;
+        log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
+    }
+
 
     @Override
     public void enterFormalParameters(FormalParametersContext ctx) {
 
         if (currentMethod == null) {
-            log.warn("enterFormalParameters : no curentMethod ");
+            // For instance CTOR
+            log.debug("enterFormalParameters : no curentMethod ");
             return;
         }
 
@@ -200,8 +218,28 @@ public class KillbillListener extends JavaBaseListener {
     }
 
     private String getFullyQualifiedType(final String type) {
-        return allImports.get(type) != null ? allImports.get(type) : packageName + "." + type;
+
+        // Is already fully qualified?
+        String [] parts = type.split("\\.");
+        if (parts.length > 1) {
+            return type;
+        }
+
+        // Is that in the import List?
+        if (allImports.get(type) != null) {
+            return allImports.get(type);
+        }
+
+        // If not, is that a java.lang?
+        try  {
+
+            final String className = JAVA_LANG + type;
+            Class clz = Class.forName(className);
+            return className;
+        } catch (ClassNotFoundException ignore) {
+        }
+
+        // Finally if we assume that file compiles, then add the current package
+        return packageName + "." + type;
     }
-
-
 }

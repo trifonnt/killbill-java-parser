@@ -6,8 +6,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
-
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.ning.killbill.objects.Argument;
@@ -30,9 +28,16 @@ public class TestSimpleInterface extends TestBase {
         assertEquals(classesorInterfaces.size(), 1);
 
         final ClassOrInterface testInterface = classesorInterfaces.get(0);
+        assertEquals(testInterface.getName(), "Account");
+
+        assertEquals(testInterface.getSuperInterfaces().size(), 3);
+        assertTrue(isSuperInterfaceDefined("com.ning.billing.junction.api.Blockable", testInterface.getSuperInterfaces()));
+        assertTrue(isSuperInterfaceDefined("com.ning.billing.util.entity.Entity", testInterface.getSuperInterfaces()));
+        assertTrue(isSuperInterfaceDefined("com.ning.billing.account.api.AccountData", testInterface.getSuperInterfaces()));
+
+
         assertEquals(testInterface.isInterface(), true);
         assertEquals(testInterface.getMethods().size(), 2);
-
         Method toMutableAccountData = getMethod("toMutableAccountData", testInterface.getMethods());
         assertNotNull(toMutableAccountData);
         assertFalse(toMutableAccountData.isGetter());
@@ -48,14 +53,6 @@ public class TestSimpleInterface extends TestBase {
         assertEquals(argument.getName(), "delegate");
     }
 
-    protected Method getMethod(final String name, List<Method> methods) {
-        for (Method cur : methods) {
-            if (cur.getName().equals(name)) {
-                return cur;
-            }
-        }
-        return null;
-    }
 
     @Override
     public String getResourceFileName() throws IOException, URISyntaxException {

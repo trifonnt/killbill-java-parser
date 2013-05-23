@@ -2,6 +2,7 @@ package com.ning.killbill;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -10,6 +11,7 @@ import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.testng.annotations.BeforeClass;
 
+import com.ning.killbill.objects.Method;
 
 
 public abstract class TestBase {
@@ -28,6 +30,24 @@ public abstract class TestBase {
         ParseTreeWalker walker = new ParseTreeWalker();
         listener = new KillbillListener();
         walker.walk(listener, tree);
+    }
+
+    protected Method getMethod(final String name, List<Method> methods) {
+        for (Method cur : methods) {
+            if (cur.getName().equals(name)) {
+                return cur;
+            }
+        }
+        return null;
+    }
+
+    protected boolean isSuperInterfaceDefined(String ifceName, List<String> ifces) {
+        for (String cur : ifces) {
+            if (cur.equals(ifceName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public abstract String getResourceFileName() throws IOException, URISyntaxException;

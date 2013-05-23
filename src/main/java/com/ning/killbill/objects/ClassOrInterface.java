@@ -9,7 +9,7 @@ public final class ClassOrInterface {
     private boolean isInterface;
 
     private final List<String> superInterfaces;
-    private final List<String> superBaseClasses;
+    private String superBaseClass;
 
     private final List<Method> methods;
 
@@ -18,7 +18,7 @@ public final class ClassOrInterface {
         this.isInterface = anInterface;
         this.methods = new ArrayList<Method>();
         superInterfaces = new ArrayList<String>();
-        superBaseClasses = new ArrayList<String>();
+        superBaseClass = null;
     }
 
     public void addMethod(Method method) {
@@ -30,7 +30,7 @@ public final class ClassOrInterface {
     }
 
     public void addSuperClass(final String claz) {
-        superBaseClasses.add(claz);
+        superBaseClass = claz;
     }
 
     public String getName() {
@@ -49,8 +49,8 @@ public final class ClassOrInterface {
         return superInterfaces;
     }
 
-    public List<String> getSuperBaseClasses() {
-        return superBaseClasses;
+    public String getSuperBaseClass() {
+        return superBaseClass;
     }
 
     @Override
@@ -59,7 +59,7 @@ public final class ClassOrInterface {
         sb.append("name='").append(name).append('\'');
         sb.append(", isInterface=").append(isInterface);
         sb.append(", superInterfaces=").append(superInterfaces);
-        sb.append(", superBaseClasses=").append(superBaseClasses);
+        sb.append(", superBaseClass='").append(superBaseClass).append('\'');
         sb.append(", methods=").append(methods);
         sb.append('}');
         return sb.toString();
