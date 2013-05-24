@@ -36,15 +36,6 @@ public class TestSimpleEnum extends TestBase {
 
     }
 
-    protected boolean isEnumValueDefined(String value, List<String> enumValues) {
-        for (String cur : enumValues) {
-            if (cur.equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     @Override
     public String getResourceName() {

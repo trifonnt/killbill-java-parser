@@ -75,6 +75,15 @@ public abstract class TestBase {
         return false;
     }
 
+    protected boolean isEnumValueDefined(String value, List<String> enumValues) {
+        for (String cur : enumValues) {
+            if (cur.equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getResourceFileName() throws IOException, URISyntaxException {
         URL resource = Resources.getResource(getResourceName());
         File resourceFile = new File(resource.toURI());

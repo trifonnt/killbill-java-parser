@@ -207,7 +207,7 @@ public class KillbillListener extends JavaBaseListener {
         currentClassesEnumOrInterfaces.push(classEnumOrInterface);
         final List<EnumConstantContext> enumValues = ctx.enumBody().enumConstants().enumConstant();
         for (EnumConstantContext cur : enumValues) {
-            classEnumOrInterface.addEnumValue(cur.getText());
+            classEnumOrInterface.addEnumValue(cur.Identifier().getText());
         }
     }
 
