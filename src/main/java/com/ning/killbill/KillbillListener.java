@@ -17,6 +17,7 @@ import com.ning.killbill.JavaParser.EnumConstantContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
+import com.ning.killbill.JavaParser.InterfaceMemberDeclContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
 import com.ning.killbill.JavaParser.MemberDeclContext;
 import com.ning.killbill.JavaParser.MemberDeclarationContext;
@@ -232,9 +233,10 @@ public class KillbillListener extends JavaBaseListener {
         if (curInMethodBodyLevel > 0) {
             return;
         }
-
         log.debug("** Entering enterInterfaceMethodOrFieldDecl" + ctx.getText());
-        currentMethodOrCtor = new Method(ctx.Identifier().getText(), currentNonParameterAnnotations);
+
+        final String returnValueType = (ctx.type().primitiveType() != null) ?ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
+        currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), currentNonParameterAnnotations);
     }
 
     @Override
@@ -320,7 +322,9 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterMethodDeclaration" + ctx.getText());
         if (!isIncludedInModifier("private", "protected", "static")) {
-            currentMethodOrCtor = new Method(ctx.Identifier().getText(), currentNonParameterAnnotations);
+            final TypeContext typeContext =  ((MemberDeclarationContext) ctx.getParent()).type();
+            final String returnValueType = (typeContext.primitiveType() != null) ? typeContext.primitiveType().getText() : typeContext.classOrInterfaceType().getText();
+            currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), currentNonParameterAnnotations);
         }
     }
 
@@ -345,7 +349,7 @@ public class KillbillListener extends JavaBaseListener {
 
         if (!isIncludedInModifier("private", "protected", "static")) {
             MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
-            currentMethodOrCtor = new Method(meberDecl.Identifier().getText(), currentNonParameterAnnotations);
+            currentMethodOrCtor = new Method(meberDecl.Identifier().getText(), "void", currentNonParameterAnnotations);
         }
 
     }

@@ -41,40 +41,48 @@ public class TestSimpleClass extends TestBase {
         Method hashCode = getMethod("hashCode", testClass.getMethods());
         assertNotNull(hashCode);
         assertFalse(hashCode.isGetter());
+        assertEquals(hashCode.getReturnValueType(), "int");
         assertEquals(hashCode.getOrderedArguments().size(), 0);
 
         Method mEquals = getMethod("equals", testClass.getMethods());
         assertNotNull(mEquals);
         assertFalse(mEquals.isGetter());
+        assertEquals(mEquals.getReturnValueType(), "boolean");
         assertEquals(mEquals.getOrderedArguments().size(), 1);
 
         Field argument = mEquals.getOrderedArguments().get(0);
         assertEquals(argument.getType(), "java.lang.Object");
         assertEquals(argument.getName(), "o");
 
+
         Method mToString = getMethod("toString", testClass.getMethods());
         assertNotNull(mToString);
         assertFalse(mToString.isGetter());
+        assertEquals(mToString.getReturnValueType(), "java.lang.String");
         assertEquals(mToString.getOrderedArguments().size(), 0);
 
         Method mGetIsUpdatable = getMethod("getIsUpdatable", testClass.getMethods());
         assertNotNull(mGetIsUpdatable);
         assertTrue(mGetIsUpdatable.isGetter());
-        assertEquals(mToString.getOrderedArguments().size(), 0);
+        assertEquals(mGetIsUpdatable.getReturnValueType(), "java.lang.Boolean");
+        assertEquals(mGetIsUpdatable.getOrderedArguments().size(), 0);
 
         Method mGetValue = getMethod("getValue", testClass.getMethods());
         assertNotNull(mGetValue);
         assertTrue(mGetValue.isGetter());
+        assertEquals(mGetValue.getReturnValueType(), "int");
         assertEquals(mGetValue.getOrderedArguments().size(), 0);
 
         Method mGetKey = getMethod("getKey", testClass.getMethods());
         assertNotNull(mGetKey);
         assertTrue(mGetKey.isGetter());
+        assertEquals(mGetKey.getReturnValueType(), "java.lang.String");
         assertEquals(mGetKey.getOrderedArguments().size(), 0);
 
         Method meMthodWithThreeArgs = getMethod("methodWithThreeArgs", testClass.getMethods());
         assertNotNull(meMthodWithThreeArgs);
         assertFalse(meMthodWithThreeArgs.isGetter());
+        assertEquals(meMthodWithThreeArgs.getReturnValueType(), "void");
         assertEquals(meMthodWithThreeArgs.getOrderedArguments().size(), 3);
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(0);
