@@ -5,4 +5,6 @@ public class Constructor extends MethodOrCtor {
     public Constructor(final String name) {
         super(name);
     }
+
+
 }

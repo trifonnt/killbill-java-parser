@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.EnumConstantContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
-import com.ning.killbill.JavaParser.FormalParametersContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
@@ -25,7 +24,9 @@ import com.ning.killbill.JavaParser.TypeContext;
 import com.ning.killbill.objects.Argument;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.ClassEnumOrInterface.ClassEnumOrInterfaceType;
+import com.ning.killbill.objects.Constructor;
 import com.ning.killbill.objects.Method;
+import com.ning.killbill.objects.MethodOrCtor;
 
 import com.google.common.base.Joiner;
 
@@ -35,7 +36,7 @@ public class KillbillListener extends JavaBaseListener {
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
 
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
-    private Method currentMethod;
+    private MethodOrCtor currentMethodOrCtor;
     private List<String> currentModifiers;
 
 
@@ -50,7 +51,7 @@ public class KillbillListener extends JavaBaseListener {
         this.allClassesEnumOrInterfaces = new ArrayList<ClassEnumOrInterface>();
         this.allImports = new HashMap<String, String>();
         this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
-        this.currentMethod = null;
+        this.currentMethodOrCtor = null;
         this.currentModifiers = null;
         this.packageName = null;
 
@@ -64,6 +65,11 @@ public class KillbillListener extends JavaBaseListener {
         return packageName;
     }
 
+    /*
+    *
+    * *************************************************  IMPORTS *********************************************
+    *
+    */
 
     @Override
     public void enterImportDeclaration(ImportDeclarationContext ctx) {
@@ -73,13 +79,22 @@ public class KillbillListener extends JavaBaseListener {
         allImports.put(identifiers.get(identifiers.size() - 1).getText(), Joiner.on(".").skipNulls().join(identifiers));
     }
 
-
+    /*
+    *
+    * *************************************************  IMPORTS *********************************************
+    *
+    */
     @Override
     public void enterPackageDeclaration(PackageDeclarationContext ctx) {
         this.packageName = ctx.qualifiedName().getText();
     }
 
 
+    /*
+     *
+     * *************************************************  INTERFACE *********************************************
+     *
+     */
     @Override
     public void enterInterfaceDeclaration(InterfaceDeclarationContext ctx) {
         log.debug("** Entering enterInterfaceDeclaration " + ctx.getText());
@@ -102,7 +117,11 @@ public class KillbillListener extends JavaBaseListener {
 
     }
 
-
+   /*
+    *
+    * *************************************************  CLASS *********************************************
+    *
+    */
     @Override
     public void enterClassDeclaration(ClassDeclarationContext ctx) {
         log.debug("** Entering enterClassDeclaration " + ctx.getText());
@@ -122,6 +141,20 @@ public class KillbillListener extends JavaBaseListener {
     }
 
     @Override
+    public void exitClassDeclaration(ClassDeclarationContext ctx) {
+        if (ctx.normalClassDeclaration() != null) {
+            final ClassEnumOrInterface claz = currentClassesEnumOrInterfaces.pop();
+            allClassesEnumOrInterfaces.add(claz);
+        }
+    }
+
+
+    /*
+    *
+    * *************************************************  ENUM *********************************************
+    *
+    */
+    @Override
     public void enterEnumDeclaration(JavaParser.EnumDeclarationContext ctx) {
         log.debug("** Entering enterEnumDeclaration " + ctx.getText());
 
@@ -140,29 +173,91 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-    @Override
-    public void exitClassDeclaration(ClassDeclarationContext ctx) {
-        if (ctx.normalClassDeclaration() != null) {
-            final ClassEnumOrInterface claz = currentClassesEnumOrInterfaces.pop();
-            allClassesEnumOrInterfaces.add(claz);
-        }
-    }
 
-
+    /*
+    *
+    * *************************************************  METHODS IFCE *********************************************
+    *
+    */
     @Override
     public void enterInterfaceMethodOrFieldDecl(InterfaceMethodOrFieldDeclContext ctx) {
         log.debug("** Entering enterInterfaceMethodOrFieldDecl" + ctx.getText());
-        currentMethod = new Method(ctx.Identifier().getText());
+        currentMethodOrCtor = new Method(ctx.Identifier().getText());
     }
 
     @Override
     public void exitInterfaceMethodOrFieldDecl(InterfaceMethodOrFieldDeclContext ctx) {
-        currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
-        currentMethod = null;
+        currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
+        currentMethodOrCtor = null;
         log.debug("** Exiting exitInterfaceMethodOrFieldDecl" + ctx.getText());
     }
 
+    /*
+    *
+    * *************************************************  CONSTRUCTOR *********************************************
+    *
+    */
+    @Override public void enterConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
+        log.debug("** Entering enterConstructorDeclaratorRest" + ctx.getText());
+        final MemberDeclContext ctor = (MemberDeclContext) ctx.getParent();
+        currentMethodOrCtor = new Constructor(ctor.Identifier().getText());
+    }
 
+    @Override public void exitConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
+        log.debug("** Exiting exitConstructorDeclaratorRest" + ctx.getText());
+        if (currentMethodOrCtor != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addConstructor((Constructor) currentMethodOrCtor);
+            currentMethodOrCtor = null;
+        }
+    }
+
+    /*
+    *
+    * *************************************************  METHODS CLASS *********************************************
+    *
+    */
+    @Override
+    public void enterMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
+        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
+        if (!isIncludedInModifier("private", "protected")) {
+            currentMethodOrCtor = new Method(ctx.Identifier().getText());
+        }
+    }
+
+    @Override
+    public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
+        if (currentMethodOrCtor != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
+            currentMethodOrCtor = null;
+        }
+        log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
+    }
+
+    @Override
+    public void enterVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
+        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
+        if (!isIncludedInModifier("private", "protected")) {
+            MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
+            currentMethodOrCtor = new Method(meberDecl.Identifier().getText());
+        }
+
+    }
+
+    @Override
+    public void exitVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
+        if (currentMethodOrCtor != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
+            currentMethodOrCtor = null;
+        }
+        log.debug("** Exiting exitVoidMethodDeclaratorRest" + ctx.getText());
+    }
+
+
+    /*
+    *
+    * *************************************************  CURRENT MODIFIERS *********************************************
+    *
+    */
     @Override
     public void enterClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx) {
         log.debug("** Entering enterClassBodyDeclaration" + ctx.getText());
@@ -181,48 +276,17 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
+
+    /*
+    *
+    * *************************************************  METHOD/CTOR PARAMETERS *********************************************
+    *
+    */
     @Override
-    public void enterMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
-        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
-        if (!isIncludedInModifier("private", "protected")) {
-            currentMethod = new Method(ctx.Identifier().getText());
-        }
-    }
+    public void enterFormalParameterDecls(JavaParser.FormalParameterDeclsContext ctx) {
 
-    @Override
-    public void exitMethodDeclaration(JavaParser.MethodDeclarationContext ctx) {
-        if (currentMethod != null) {
-            currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
-            currentMethod = null;
-        }
-        log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
-    }
-
-    @Override
-    public void enterVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
-        log.debug("** Entering enterMethodDeclaration" + ctx.getText());
-        if (!isIncludedInModifier("private", "protected")) {
-             MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
-            currentMethod = new Method(meberDecl.Identifier().getText());
-        }
-
-    }
-
-    @Override
-    public void exitVoidMethodDeclaratorRest(JavaParser.VoidMethodDeclaratorRestContext ctx) {
-        if (currentMethod != null) {
-            currentClassesEnumOrInterfaces.peekFirst().addMethod(currentMethod);
-            currentMethod = null;
-        }
-        log.debug("** Exiting exitVoidMethodDeclaratorRest" + ctx.getText());
-    }
-
-
-    @Override public void enterFormalParameterDecls(JavaParser.FormalParameterDeclsContext ctx) {
-
-    if (currentMethod == null) {
-            // For instance CTOR
-            log.debug("enterFormalParameters : no curentMethod ");
+        if (currentMethodOrCtor == null) {
+            log.warn("enterFormalParameters : no curentMethod ");
             return;
         }
 
@@ -240,7 +304,8 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("enterFormalParameters : parameter " + parameterType + ":" + parameterVariableName);
 
-        currentMethod.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType)));
+        if (currentMethodOrCtor != null)
+        currentMethodOrCtor.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType)));
 
     }
 

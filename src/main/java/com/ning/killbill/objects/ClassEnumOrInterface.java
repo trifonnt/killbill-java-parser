@@ -22,13 +22,22 @@ public final class ClassEnumOrInterface {
 
     private final List<Method> methods;
 
+
+    private final List<Constructor> ctors;
+
+
     public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type) {
         this.name = name;
         this.type = type;
         this.methods = new ArrayList<Method>();
-        superInterfaces = new ArrayList<String>();
-        superBaseClass = null;
-        enumValues = new ArrayList<String>();
+        this.ctors = new ArrayList<Constructor>();
+        this.superInterfaces = new ArrayList<String>();
+        this.superBaseClass = null;
+        this.enumValues = new ArrayList<String>();
+    }
+
+    public void addConstructor(Constructor ctor) {
+        ctors.add(ctor);
     }
 
     public void addMethod(Method method) {
@@ -67,6 +76,10 @@ public final class ClassEnumOrInterface {
         return enumValues;
     }
 
+    public List<Constructor> getCtors() {
+        return ctors;
+    }
+
     public List<Method> getMethods() {
         return methods;
     }
@@ -88,6 +101,7 @@ public final class ClassEnumOrInterface {
         sb.append(", superBaseClass='").append(superBaseClass).append('\'');
         sb.append(", enumValues=").append(enumValues);
         sb.append(", methods=").append(methods);
+        sb.append(", ctors=").append(ctors);
         sb.append('}');
         return sb.toString();
     }

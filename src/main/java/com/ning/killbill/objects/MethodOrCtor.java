@@ -25,4 +25,14 @@ public abstract class MethodOrCtor {
     public List<Argument> getOrderedArguments() {
         return orderedArguments;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Method{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", orderedArguments=").append(orderedArguments);
+        sb.append('}');
+        return sb.toString();
+    }
+
 }

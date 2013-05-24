@@ -10,13 +10,4 @@ public final class Method extends MethodOrCtor {
     public boolean isGetter() {
         return (name.startsWith("get") || name.startsWith("is"));
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Method{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", orderedArguments=").append(orderedArguments);
-        sb.append('}');
-        return sb.toString();
-    }
 }
