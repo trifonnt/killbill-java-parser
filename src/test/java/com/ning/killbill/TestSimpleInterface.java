@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Argument;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Method;
 
@@ -44,7 +44,7 @@ public class TestSimpleInterface extends TestBase {
         assertFalse(mergeWithDelegate.isGetter());
         assertEquals(mergeWithDelegate.getOrderedArguments().size(), 1);
 
-        Argument argument = mergeWithDelegate.getOrderedArguments().get(0);
+        Field argument = mergeWithDelegate.getOrderedArguments().get(0);
         assertEquals(argument.getType(), "com.ning.billing.account.api.Account");
         assertEquals(argument.getName(), "delegate");
     }

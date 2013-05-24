@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Argument;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Constructor;
 import com.ning.killbill.objects.Method;
@@ -34,7 +34,7 @@ public class TestClassWithAnnotation extends TestBase {
         final Constructor ctor = testClass.getCtors().get(0);
         assertEquals(ctor.getOrderedArguments().size(), 2);
 
-        Argument argument = ctor.getOrderedArguments().get(0);
+        Field argument = ctor.getOrderedArguments().get(0);
         assertEquals(argument.getType(), "java.lang.String");
         assertEquals(argument.getName(), "accountId");
         assertEquals(argument.getAnnotations().size(), 1);
@@ -54,6 +54,21 @@ public class TestClassWithAnnotation extends TestBase {
 
         assertEquals(testClass.getSuperInterfaces().size(), 0);
         assertNotNull(testClass.getSuperBaseClass());
+
+        assertEquals(testClass.getFields().size(), 3);
+        Field fAccountId = getField("accountId", testClass.getFields());
+        assertNotNull(fAccountId);
+        assertEquals(fAccountId.getName(), "accountId");
+        assertEquals(fAccountId.getType(), "java.lang.String");
+        assertEquals(fAccountId.getAnnotations().size(), 1);
+        assertEquals(fAccountId.getAnnotations().get(0).getName(), "MyFieldAnnotation");
+        assertEquals(fAccountId.getAnnotations().get(0).getValue(), "yeah");
+
+        Field fEmail = getField("email", testClass.getFields());
+        assertNotNull(fEmail);
+        assertEquals(fEmail.getName(), "email");
+        assertEquals(fEmail.getType(), "java.lang.String");
+        assertEquals(fEmail.getAnnotations().size(), 0);
 
         assertEquals(testClass.getMethods().size(), 3);
 

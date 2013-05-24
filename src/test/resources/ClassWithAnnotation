@@ -27,7 +27,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AccountEmailJson {
 
+    @MyFieldAnnotation("yeah")
     private final String accountId;
+
     private final String email;
 
     @JsonCreator

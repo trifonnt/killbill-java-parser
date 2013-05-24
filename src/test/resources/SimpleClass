@@ -21,8 +21,9 @@ import com.ning.billing.payment.Foo;
 public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
 
     private final String key;
-    private final Object value;
+    private final int value;
     private final Boolean isUpdatable;
+
 
     public PaymentMethodKVInfo(final String key, final Object value, final Boolean isUpdatable) {
         this.key = key;
@@ -34,7 +35,7 @@ public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
         return key;
     }
 
-    public Object getValue() {
+    public int getValue() {
         return value;
     }
 
@@ -43,7 +44,7 @@ public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
     }
 
 
-    public void methodWithThreeArgs(Boolean b, String s, Object o) {
+    public void methodWithThreeArgs(Boolean b, int foo, Object o) {
     }
 
     @Override

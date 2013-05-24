@@ -6,7 +6,7 @@ import java.util.List;
 public abstract class MethodOrCtor {
 
     protected final String name;
-    protected final List<Argument> orderedArguments;
+    protected final List<Field> orderedArguments;
 
 
     protected final List<Annotation> annotations;
@@ -14,10 +14,10 @@ public abstract class MethodOrCtor {
     public MethodOrCtor(final String name, final List<Annotation> annotations) {
         this.name = name;
         this.annotations = annotations;
-        this.orderedArguments = new ArrayList<Argument>();
+        this.orderedArguments = new ArrayList<Field>();
     }
 
-    public void addArgument(Argument arg) {
+    public void addArgument(Field arg) {
         orderedArguments.add(arg);
     }
 
@@ -25,7 +25,7 @@ public abstract class MethodOrCtor {
         return name;
     }
 
-    public List<Argument> getOrderedArguments() {
+    public List<Field> getOrderedArguments() {
         return orderedArguments;
     }
 

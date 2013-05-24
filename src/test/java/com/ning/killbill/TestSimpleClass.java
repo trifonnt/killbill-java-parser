@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Argument;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Method;
 
@@ -16,7 +16,7 @@ import static org.testng.Assert.assertTrue;
 public class TestSimpleClass extends TestBase {
 
     @Test(groups = "fast")
-    public void testSimpleInterface() {
+    public void testSimpleClass() {
 
 
         assertEquals(listener.getPackageName(), "com.ning.billing.payment.api");
@@ -48,7 +48,7 @@ public class TestSimpleClass extends TestBase {
         assertFalse(mEquals.isGetter());
         assertEquals(mEquals.getOrderedArguments().size(), 1);
 
-        Argument argument = mEquals.getOrderedArguments().get(0);
+        Field argument = mEquals.getOrderedArguments().get(0);
         assertEquals(argument.getType(), "java.lang.Object");
         assertEquals(argument.getName(), "o");
 
@@ -82,8 +82,8 @@ public class TestSimpleClass extends TestBase {
         assertEquals(argument.getName(), "b");
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(1);
-        assertEquals(argument.getType(), "java.lang.String");
-        assertEquals(argument.getName(), "s");
+        assertEquals(argument.getType(), "int");
+        assertEquals(argument.getName(), "foo");
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(2);
         assertEquals(argument.getType(), "java.lang.Object");

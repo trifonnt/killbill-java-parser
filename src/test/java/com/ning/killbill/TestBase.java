@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.testng.annotations.BeforeClass;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.Method;
 
 import com.google.common.io.Resources;
@@ -39,6 +40,15 @@ public abstract class TestBase {
 
     protected Method getMethod(final String name, List<Method> methods) {
         for (Method cur : methods) {
+            if (cur.getName().equals(name)) {
+                return cur;
+            }
+        }
+        return null;
+    }
+
+    protected Field getField(final String name, List<Field> fields) {
+        for (Field cur : fields) {
             if (cur.getName().equals(name)) {
                 return cur;
             }

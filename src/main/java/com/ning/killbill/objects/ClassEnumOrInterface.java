@@ -19,10 +19,9 @@ public final class ClassEnumOrInterface {
 
 
     private final List<String> enumValues;
-
     private final List<Method> methods;
 
-
+    private final List<Field> fields;
     private final List<Constructor> ctors;
 
 
@@ -34,6 +33,7 @@ public final class ClassEnumOrInterface {
         this.superInterfaces = new ArrayList<String>();
         this.superBaseClass = null;
         this.enumValues = new ArrayList<String>();
+        fields = new ArrayList<Field>();
     }
 
     public void addConstructor(Constructor ctor) {
@@ -42,6 +42,10 @@ public final class ClassEnumOrInterface {
 
     public void addMethod(Method method) {
         methods.add(method);
+    }
+
+    public void addField(Field field) {
+        fields.add(field);
     }
 
     public void addSuperInterface(final String ifce) {
@@ -84,6 +88,10 @@ public final class ClassEnumOrInterface {
         return methods;
     }
 
+    public List<Field> getFields() {
+        return fields;
+    }
+
     public List<String> getSuperInterfaces() {
         return superInterfaces;
     }
@@ -101,6 +109,7 @@ public final class ClassEnumOrInterface {
         sb.append(", superBaseClass='").append(superBaseClass).append('\'');
         sb.append(", enumValues=").append(enumValues);
         sb.append(", methods=").append(methods);
+        sb.append(", fields=").append(fields);
         sb.append(", ctors=").append(ctors);
         sb.append('}');
         return sb.toString();

@@ -2,7 +2,7 @@ package com.ning.killbill.objects;
 
 import java.util.List;
 
-public final class Argument {
+public final class Field {
 
 
     private final String name;
@@ -10,7 +10,7 @@ public final class Argument {
 
     private final List<Annotation> annotations;
 
-    public Argument(final String name, final String type, final List<Annotation> annotations) {
+    public Field(final String name, final String type, final List<Annotation> annotations) {
         this.name = name;
         this.type = type;
         this.annotations = annotations;
@@ -30,7 +30,7 @@ public final class Argument {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Argument{");
+        final StringBuilder sb = new StringBuilder("Field{");
         sb.append("name='").append(name).append('\'');
         sb.append(", type='").append(type).append('\'');
         sb.append(", annotations=").append(annotations);
