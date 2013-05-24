@@ -33,10 +33,16 @@ public class TestClassWithAnnotation extends TestBase {
         Argument argument = ctor.getOrderedArguments().get(0);
         assertEquals(argument.getType(), "java.lang.String");
         assertEquals(argument.getName(), "accountId");
+        assertEquals(argument.getAnnotations().size(), 1);
+        assertEquals(argument.getAnnotations().get(0).getName(), "JsonProperty");
+        assertEquals(argument.getAnnotations().get(0).getValue(), "accountId");
 
         argument = ctor.getOrderedArguments().get(1);
         assertEquals(argument.getType(), "java.lang.String");
         assertEquals(argument.getName(), "email");
+        assertEquals(argument.getAnnotations().size(), 1);
+        assertEquals(argument.getAnnotations().get(0).getName(), "JsonProperty");
+        assertEquals(argument.getAnnotations().get(0).getValue(), "email");
 
         assertEquals(testClass.getSuperInterfaces().size(), 0);
         assertNotNull(testClass.getSuperBaseClass());

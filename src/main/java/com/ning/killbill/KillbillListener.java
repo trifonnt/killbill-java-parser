@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ning.killbill.JavaParser.AnnotationContext;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.EnumConstantContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
@@ -21,6 +22,7 @@ import com.ning.killbill.JavaParser.MemberDeclContext;
 import com.ning.killbill.JavaParser.ModifierContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
 import com.ning.killbill.JavaParser.TypeContext;
+import com.ning.killbill.objects.Annotation;
 import com.ning.killbill.objects.Argument;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.ClassEnumOrInterface.ClassEnumOrInterfaceType;
@@ -33,17 +35,30 @@ import com.google.common.base.Joiner;
 public class KillbillListener extends JavaBaseListener {
 
     public static final String JAVA_LANG = "java.lang.";
+
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
 
+    /*
+     * Current state machine as we go through callbacks
+     */
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
     private MethodOrCtor currentMethodOrCtor;
     private List<String> currentModifiers;
+    private List<Annotation> currentAnnotations;
 
-
+    /**
+     * Import statements.
+     */
     private final Map<String, String> allImports;
 
-
+    /**
+     * Package Name
+     */
     private String packageName;
+
+    /**
+     * Root for all classes/interfaces/enum per java file.
+     */
     private final List<ClassEnumOrInterface> allClassesEnumOrInterfaces;
 
 
@@ -53,6 +68,7 @@ public class KillbillListener extends JavaBaseListener {
         this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
         this.currentMethodOrCtor = null;
         this.currentModifiers = null;
+        this.currentAnnotations = null;
         this.packageName = null;
 
     }
@@ -255,7 +271,7 @@ public class KillbillListener extends JavaBaseListener {
 
     /*
     *
-    * *************************************************  CURRENT MODIFIERS *********************************************
+    * *************************************************  CURRENT MODIFIERS FOR METHODS /CTOR *********************************************
     *
     */
     @Override
@@ -271,17 +287,52 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void exitClassBodyDeclaration(JavaParser.ClassBodyDeclarationContext ctx) {
-        log.debug("** Exiting exitClassBodyDeclaration" + ctx.getText());
         currentModifiers = null;
+        log.debug("** Exiting exitClassBodyDeclaration" + ctx.getText());
     }
 
+    /*
+    *
+    * *************************************************  CURRENT ANNOTATIONS FOR METHOD/CTOR PARAMETERS *********************************************
+    *
+    */
+
+    @Override
+    public void enterVariableModifier(JavaParser.VariableModifierContext ctx) {
+        log.debug("** Entering enterVariableModifier" + ctx.getText());
+
+        if (currentAnnotations != null && ctx.annotation() != null) {
+            final AnnotationContext annotationContext = ctx.annotation();
+            final String annotationName = annotationContext.annotationName().getText();
+            final String value = annotationContext.elementValue().expression().primary().literal().getText();
+            currentAnnotations.add(new Annotation(annotationName, value));
+        }
+    }
 
 
     /*
     *
     * *************************************************  METHOD/CTOR PARAMETERS *********************************************
     *
+    * The rules for arguments are a bit tricky; we set currentAnnotations in the Decls and reset it in the DeclsRest
+    *
+    * formalParameters
+    *     :   '(' formalParameterDecls? ')'
+    *     ;
+    *
+    *   formalParameterDecls
+    *     :      variableModifiers type formalParameterDeclsRest
+    *     ;
+    *
+    *   formalParameterDeclsRest
+    *      :   variableDeclaratorId (',' formalParameterDecls)?
+    *      |   '...' variableDeclaratorId
+    *      ;
+    *
+    *
     */
+
+
     @Override
     public void enterFormalParameterDecls(JavaParser.FormalParameterDeclsContext ctx) {
 
@@ -289,6 +340,8 @@ public class KillbillListener extends JavaBaseListener {
             log.warn("enterFormalParameters : no curentMethod ");
             return;
         }
+
+        currentAnnotations = new ArrayList<Annotation>();
 
         final TypeContext typeContext = ctx.type();
 
@@ -304,10 +357,17 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("enterFormalParameters : parameter " + parameterType + ":" + parameterVariableName);
 
-        if (currentMethodOrCtor != null)
-        currentMethodOrCtor.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType)));
-
+        if (currentMethodOrCtor != null) {
+            currentMethodOrCtor.addArgument(new Argument(parameterVariableName, getFullyQualifiedType(parameterType), currentAnnotations));
+        }
     }
+
+    @Override
+    public void exitFormalParameterDeclsRest(JavaParser.FormalParameterDeclsRestContext ctx) {
+        currentAnnotations = null;
+        log.debug("** Exiting exitFormalParameterDeclsRest" + ctx.getText());
+    }
+
 
     @Override
     public String toString() {
@@ -334,7 +394,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         for (String cur : currentModifiers) {
             for (String m : modifiers)
-                if (cur.equals(m)) {
+                if (m.equals(cur)) {
                     return true;
                 }
         }

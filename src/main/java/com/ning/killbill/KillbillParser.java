@@ -18,7 +18,6 @@ public class KillbillParser {
         JavaParser parser = new JavaParser(tokens);
         parser.setBuildParseTree(true);
         RuleContext tree = parser.compilationUnit();
-
         ParseTreeWalker walker = new ParseTreeWalker();
         KillbillListener listener = new KillbillListener();
         walker.walk(listener, tree);
@@ -28,5 +27,6 @@ public class KillbillParser {
         tree.inspect(parser); // show in gui
         System.out.println(tree.toStringTree(parser));
         */
+
     }
 }
