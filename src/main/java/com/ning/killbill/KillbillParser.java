@@ -23,10 +23,9 @@ public class KillbillParser {
         walker.walk(listener, tree);
         System.out.println("**** RESULT: *****");
         System.out.println(listener.toString());
-/*
+
         tree.inspect(parser); // show in gui
         System.out.println(tree.toStringTree(parser));
-        */
 
     }
 }

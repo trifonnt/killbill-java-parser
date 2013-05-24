@@ -89,6 +89,10 @@ public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
         return result;
     }
 
+    public static int staticShouldBeIgnored() {
+        return 7;
+    }
+
     protected String privateShouldBeIgnored(Object foo) {
         return foo.toString();
     }

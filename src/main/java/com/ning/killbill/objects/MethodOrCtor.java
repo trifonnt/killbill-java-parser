@@ -6,11 +6,14 @@ import java.util.List;
 public abstract class MethodOrCtor {
 
     protected final String name;
-
     protected final List<Argument> orderedArguments;
 
-    public MethodOrCtor(final String name) {
+
+    protected final List<Annotation> annotations;
+
+    public MethodOrCtor(final String name, final List<Annotation> annotations) {
         this.name = name;
+        this.annotations = annotations;
         this.orderedArguments = new ArrayList<Argument>();
     }
 
@@ -26,13 +29,7 @@ public abstract class MethodOrCtor {
         return orderedArguments;
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Method{");
-        sb.append("name='").append(name).append('\'');
-        sb.append(", orderedArguments=").append(orderedArguments);
-        sb.append('}');
-        return sb.toString();
+    public List<Annotation> getAnnotations() {
+        return annotations;
     }
-
 }

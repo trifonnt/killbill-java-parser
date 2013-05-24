@@ -39,78 +39,38 @@ public class AccountEmailJson {
     public String getAccountId() {
         return accountId;
     }
-/*
     public String getEmail() {
         return email;
     }
 
+    @JsonIgnore
     public AccountEmail toAccountEmail(final UUID accountEmailId) {
 
-        return new AccountEmail() {
+        return new AccountEmailXX() {
             @Override
-            public UUID getAccountId() {
+            public UUID getAccountIdXX() {
                 return UUID.fromString(accountId);
             }
 
             @Override
-            public String getEmail() {
+            public String getEmailXX() {
                 return email;
             }
 
             @Override
-            public UUID getId() {
+            public UUID getIdXX() {
                 return accountEmailId;
             }
 
             @Override
-            public DateTime getCreatedDate() {
+            public DateTime getCreatedDateXX() {
                 return null;
             }
 
             @Override
-            public DateTime getUpdatedDate() {
+            public DateTime getUpdatedDateXX() {
                 return null;
             }
         };
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("AccountEmailJson");
-        sb.append("{accountId='").append(accountId).append('\'');
-        sb.append(", email='").append(email).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        final AccountEmailJson that = (AccountEmailJson) o;
-
-        if (accountId != null ? !accountId.equals(that.accountId) : that.accountId != null) {
-            return false;
-        }
-        if (email != null ? !email.equals(that.email) : that.email != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = accountId != null ? accountId.hashCode() : 0;
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        return result;
-    }
-
-    */
 }

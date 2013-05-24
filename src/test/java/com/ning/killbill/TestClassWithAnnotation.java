@@ -7,8 +7,12 @@ import org.testng.annotations.Test;
 import com.ning.killbill.objects.Argument;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Constructor;
+import com.ning.killbill.objects.Method;
 
+
+import static junit.framework.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
 public class TestClassWithAnnotation extends TestBase {
@@ -44,8 +48,22 @@ public class TestClassWithAnnotation extends TestBase {
         assertEquals(argument.getAnnotations().get(0).getName(), "JsonProperty");
         assertEquals(argument.getAnnotations().get(0).getValue(), "email");
 
+        assertEquals(ctor.getAnnotations().size(), 1);
+        assertEquals(ctor.getAnnotations().get(0).getName(), "JsonCreator");
+        assertNull(ctor.getAnnotations().get(0).getValue());
+
         assertEquals(testClass.getSuperInterfaces().size(), 0);
         assertNotNull(testClass.getSuperBaseClass());
+
+        assertEquals(testClass.getMethods().size(), 3);
+
+        Method mToAccountEmail = getMethod("toAccountEmail", testClass.getMethods());
+        assertNotNull(mToAccountEmail);
+        assertFalse(mToAccountEmail.isGetter());
+        assertEquals(mToAccountEmail.getOrderedArguments().size(), 1);
+        assertEquals(mToAccountEmail.getAnnotations().size(), 1);
+        assertEquals(mToAccountEmail.getAnnotations().get(0).getName(), "JsonIgnore");
+        assertNull(mToAccountEmail.getAnnotations().get(0).getValue());
     }
 
     @Override
