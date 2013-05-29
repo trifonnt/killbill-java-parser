@@ -522,7 +522,16 @@ public class KillbillListener extends JavaBaseListener {
     private Annotation createAnnotationFromAnnotationContext(final AnnotationContext annotationContext) {
         final String annotationName = annotationContext.annotationName().getText();
         final String value = annotationContext.elementValue() != null ? annotationContext.elementValue().expression().primary().literal().getText() : null;
-        return new  Annotation(annotationName, value);
+
+        return new  Annotation(annotationName, stripQuoteFromValue(value));
+    }
+
+    private String stripQuoteFromValue(final String value) {
+        if (value != null && value.startsWith("\"") &&  (value.endsWith("\""))) {
+            return value.substring(1,value.length() -1);
+        } else {
+            return value;
+        }
     }
 
     private boolean isIncludedInModifier(final String... modifiers) {
