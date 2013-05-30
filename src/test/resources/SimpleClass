@@ -18,7 +18,7 @@ package com.ning.billing.payment.api;
 
 import com.ning.billing.payment.Foo;
 
-public class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
+public abstract class PaymentMethodKVInfo extends Foo implements Bar, Buzz {
 
     private final String key;
     private final int value;

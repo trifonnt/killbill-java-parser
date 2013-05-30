@@ -6,8 +6,8 @@ public final class Method extends MethodOrCtor {
 
     private final String returnValueType;
 
-    public Method(final String name, final String returnValueType, final List<Annotation> annotations) {
-        super(name, annotations);
+    public Method(final String name, final String returnValueType, final boolean isAbstract, final List<Annotation> annotations) {
+        super(name, isAbstract, annotations);
         this.returnValueType = returnValueType;
     }
 

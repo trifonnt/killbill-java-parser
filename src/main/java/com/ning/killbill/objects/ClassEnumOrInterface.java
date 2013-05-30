@@ -17,6 +17,8 @@ public final class ClassEnumOrInterface {
     private final List<String> superInterfaces;
     private String superBaseClass;
 
+    private final boolean isAbstract;
+
 
     private final List<String> enumValues;
     private final List<Method> methods;
@@ -25,9 +27,10 @@ public final class ClassEnumOrInterface {
     private final List<Constructor> ctors;
 
 
-    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type) {
+    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type, final boolean anAbstract) {
         this.name = name;
         this.type = type;
+        isAbstract = anAbstract;
         this.methods = new ArrayList<Method>();
         this.ctors = new ArrayList<Constructor>();
         this.superInterfaces = new ArrayList<String>();
@@ -100,11 +103,16 @@ public final class ClassEnumOrInterface {
         return superBaseClass;
     }
 
+    public boolean isAbstract() {
+        return isAbstract;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("ClassEnumOrInterface{");
         sb.append("name='").append(name).append('\'');
         sb.append(", type=").append(type);
+        sb.append(", abstract=").append(isAbstract);
         sb.append(", superInterfaces=").append(superInterfaces);
         sb.append(", superBaseClass='").append(superBaseClass).append('\'');
         sb.append(", enumValues=").append(enumValues);

@@ -28,6 +28,7 @@ public class TestSimpleClass extends TestBase {
         assertEquals(testClass.isInterface(), false);
         assertEquals(testClass.isEnum(), false);
         assertEquals(testClass.isClass(), true);
+        assertTrue(testClass.isAbstract());
 
         assertEquals(testClass.getSuperInterfaces().size(), 2);
         isSuperInterfaceDefined("com.ning.billing.payment.api.Bar", testClass.getSuperInterfaces());

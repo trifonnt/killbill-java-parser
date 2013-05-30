@@ -65,7 +65,7 @@ public class KillbillParserArgs {
         return f.isFile();
     }
 
-    public boolean isInputDirectory(final String scheme) {
+    public boolean isInputDirectory() {
         if (! "file".equals(input.getScheme())) {
             return false;
         }

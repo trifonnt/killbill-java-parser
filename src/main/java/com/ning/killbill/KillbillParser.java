@@ -22,6 +22,7 @@ public class KillbillParser {
 
     public static void main(String[] args) throws Exception {
 
+        //parserDebug();
         final KillbillParserArgs kbParserArgs = parseArguments(args);
 
         logger.info("KillbillParser input = " + kbParserArgs.getInput() +
@@ -42,13 +43,8 @@ public class KillbillParser {
     }
 
 
-
-
-
-
-
     private static void parserDebug() throws Exception {
-        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/EnumWithFields");
+        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/SimpleClass");
         JavaLexer lexer = new JavaLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JavaParser parser = new JavaParser(tokens);

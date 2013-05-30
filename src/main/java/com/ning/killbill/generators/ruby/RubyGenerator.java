@@ -16,6 +16,8 @@ import com.ning.killbill.objects.Field;
 public class RubyGenerator extends BaseGenerator {
 
     private final static int INDENT_LEVEL = 2;
+    private final static String DEFAULT_BASE_CLASS  = "Resource";
+    private final String [] MODULES = {"KillbillClient", "Model"};
 
     private int curIndent = 0;
 
@@ -31,11 +33,19 @@ public class RubyGenerator extends BaseGenerator {
         Writer w = null;
         try {
             w = new PrintWriter(output);
-            writeWithIndetation("module KillBillClient", w, 0);
-            writeWithIndetation("module Model", w, INDENT_LEVEL);
-            writeWithIndetation("module " + obj.getName() + " < Resource", w, INDENT_LEVEL);
-            final Constructor ctor = getJsonCreatorCTOR(obj);
             boolean first = true;
+            for (int i = 0; i< MODULES.length; i++) {
+                if (first) {
+                    writeWithIndetation("module " + MODULES[i], w, 0);
+                    first = false;
+                } else {
+                    writeWithIndetation("module " + MODULES[i], w, INDENT_LEVEL);
+                }
+            }
+            final String baseClass = obj.getSuperBaseClass() != null ? obj.getSuperBaseClass() : DEFAULT_BASE_CLASS;
+            writeWithIndetation("module " + obj.getName() + " < " + baseClass, w, INDENT_LEVEL);
+            final Constructor ctor = getJsonCreatorCTOR(obj);
+            first = true;
             for (Field f : ctor.getOrderedArguments()) {
                 final String attribute = camelToUnderscore(getJsonPropertyAnnotationValue(obj, f));
                 if (first) {
@@ -46,9 +56,9 @@ public class RubyGenerator extends BaseGenerator {
                 }
             }
             writeWithIndetation("end", w, -INDENT_LEVEL);
-            writeWithIndetation("end", w, -INDENT_LEVEL);
-            writeWithIndetation("end", w, -INDENT_LEVEL);
-
+            for (int i = 0; i< MODULES.length; i++) {
+                    writeWithIndetation("end", w, -INDENT_LEVEL);
+            }
             w.flush();
             w.close();
 

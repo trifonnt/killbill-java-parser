@@ -8,13 +8,15 @@ public abstract class MethodOrCtor {
     protected final String name;
     protected final List<Field> orderedArguments;
 
+    protected final boolean isAbstract;
 
     protected final List<Annotation> annotations;
 
-    public MethodOrCtor(final String name, final List<Annotation> annotations) {
+    public MethodOrCtor(final String name, final boolean isAbstract, final List<Annotation> annotations) {
         this.name = name;
         this.annotations = annotations;
         this.orderedArguments = new ArrayList<Field>();
+        this.isAbstract = isAbstract;
     }
 
     public void addArgument(Field arg) {
@@ -27,6 +29,10 @@ public abstract class MethodOrCtor {
 
     public List<Field> getOrderedArguments() {
         return orderedArguments;
+    }
+
+    public boolean isAbstract() {
+        return isAbstract;
     }
 
     public List<Annotation> getAnnotations() {

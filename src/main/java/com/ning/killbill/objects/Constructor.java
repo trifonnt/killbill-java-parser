@@ -4,8 +4,8 @@ import java.util.List;
 
 public class Constructor extends MethodOrCtor {
 
-    public Constructor(final String name, final List<Annotation> annotations) {
-        super(name, annotations);
+    public Constructor(final String name, final boolean isAbstract, final List<Annotation> annotations) {
+        super(name, isAbstract, annotations);
     }
 
     @Override
