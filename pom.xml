@@ -110,18 +110,32 @@
                 <version>2.13</version>
                 <configuration>
                     <groups>fast</groups>
-<!--
-                    <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=128m </argLine>
-                    <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <systemPropertyVariables>
-                        <file.encoding>UTF-8</file.encoding>
-                        <user.timezone>UTC</user.timezone>
-                        <killbill.version>${project.version}</killbill.version>
-                    </systemPropertyVariables>
--->
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>killbill-java-parser</id>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <createSourcesJar>true</createSourcesJar>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <filters>
+                                <filter>
+                                    <artifact>${project.groupId}:${project.artifactId}</artifact>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

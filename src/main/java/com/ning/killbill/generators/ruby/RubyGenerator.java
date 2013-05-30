@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.util.List;
@@ -24,8 +23,11 @@ public class RubyGenerator extends BaseGenerator {
 
     private final static int INDENT_LEVEL = 2;
     private final static String DEFAULT_BASE_CLASS = "Resource";
+    private final static String REQUIRE_PREFIX = "killbill_client/models/gen/";
 
-    private final String[] MODULES = {"KillbillClient", "Model"};
+    private final static String REQUIRE_FILE_NAME = "require_gen.rb";
+
+    private final String[] MODULES = {"KillBillClient", "Model"};
 
     private int curIndent = 0;
 
@@ -33,10 +35,13 @@ public class RubyGenerator extends BaseGenerator {
         this.curIndent = 0;
     }
 
+    @Override
+    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+    }
 
     @Override
     protected void generateClass(final ClassEnumOrInterface obj, final File outputDir) throws GeneratorException {
-        final File output = new File(outputDir, createFileName(obj.getName()));
+        final File output = new File(outputDir, createFileName(obj.getName(), true));
 
         writeLicense(output);
 
@@ -49,29 +54,29 @@ public class RubyGenerator extends BaseGenerator {
             boolean first = true;
             for (int i = 0; i < MODULES.length; i++) {
                 if (first) {
-                    writeWithIndetation("module " + MODULES[i], w, 0);
+                    writeWithIndentation("module " + MODULES[i], w, 0);
                     first = false;
                 } else {
-                    writeWithIndetation("module " + MODULES[i], w, INDENT_LEVEL);
+                    writeWithIndentation("module " + MODULES[i], w, INDENT_LEVEL);
                 }
             }
             //final String baseClass = obj.getSuperBaseClass() != null ? obj.getSuperBaseClass() : DEFAULT_BASE_CLASS;
             final String baseClass = DEFAULT_BASE_CLASS;
-            writeWithIndetation("module " + createClassName(obj.getName()) + " < " + baseClass, w, INDENT_LEVEL);
+            writeWithIndentation("class " + createClassName(obj.getName()) + " < " + baseClass, w, INDENT_LEVEL);
             final Constructor ctor = getJsonCreatorCTOR(obj);
             first = true;
             for (Field f : ctor.getOrderedArguments()) {
                 final String attribute = camelToUnderscore(getJsonPropertyAnnotationValue(obj, f));
                 if (first) {
                     first = false;
-                    writeWithIndetation("attribute: " + attribute, w, INDENT_LEVEL);
+                    writeWithIndentation("attribute :" + attribute, w, INDENT_LEVEL);
                 } else {
-                    writeWithIndetation("attribute: " + attribute, w, 0);
+                    writeWithIndentation("attribute :" + attribute, w, 0);
                 }
             }
-            writeWithIndetation("end", w, -INDENT_LEVEL);
+            writeWithIndentation("end", w, -INDENT_LEVEL);
             for (int i = 0; i < MODULES.length; i++) {
-                writeWithIndetation("end", w, -INDENT_LEVEL);
+                writeWithIndentation("end", w, -INDENT_LEVEL);
             }
             w.flush();
             w.close();
@@ -80,6 +85,25 @@ public class RubyGenerator extends BaseGenerator {
             throw new GeneratorException("Failed to generate file " + obj.getName(), e);
         } catch (IOException e) {
             throw new GeneratorException("Failed to generate file " + obj.getName(), e);
+        }
+    }
+
+    @Override
+    protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+
+        final File output = new File(outputDir, REQUIRE_FILE_NAME);
+
+        writeLicense(output);
+        try {
+            final Writer w = new FileWriter(output, true);
+            writeHeader(w);
+            for (ClassEnumOrInterface cur : classes) {
+                w.write("require '" + REQUIRE_PREFIX + createFileName(cur.getName(), false) + "'\n");
+            }
+            w.flush();
+            w.close();
+        } catch (IOException e) {
+            throw new GeneratorException("Failed to create require file", e);
         }
     }
 
@@ -106,7 +130,7 @@ public class RubyGenerator extends BaseGenerator {
         w.write("\n");
     }
 
-    private void writeWithIndetation(final String str, final Writer w, int curIndentOffest) throws IOException {
+    private void writeWithIndentation(final String str, final Writer w, int curIndentOffest) throws IOException {
         curIndent += curIndentOffest;
         for (int i = 0; i < curIndent; i++) {
             w.write(" ");
@@ -115,8 +139,9 @@ public class RubyGenerator extends BaseGenerator {
         w.write("\n");
     }
 
-    private static String createFileName(final String objName) {
-        return camelToUnderscore(createClassName(objName) + ".rb");
+    private static String createFileName(final String objName, boolean addRubyExtension) {
+        final String extension = addRubyExtension ? ".rb" : "";
+        return camelToUnderscore(createClassName(objName) + extension);
     }
 
     private static String createClassName(final String objName) {

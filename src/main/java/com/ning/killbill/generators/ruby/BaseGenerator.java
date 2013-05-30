@@ -41,6 +41,9 @@ public abstract class BaseGenerator implements Generator {
     @Override
     public void generate(final KillbillParserArgs args) throws GeneratorException {
 
+        final List<ClassEnumOrInterface> allGeneratedClasses = new ArrayList<ClassEnumOrInterface>();
+
+        startGeneration(allClasses, args.getOutputDir());
         try {
             if (args.isInputFile()) {
                 generateFromFile(args.getInputFile(), args.getOutputDir());
@@ -50,15 +53,16 @@ public abstract class BaseGenerator implements Generator {
                 throw new GeneratorException("Not yet supported scheme: " + args.getInput().getScheme());
             }
 
-
             for (ClassEnumOrInterface cur : allClasses) {
                 if (!cur.isAbstract()) {
                     generateClass(cur, args.getOutputDir());
+                    allGeneratedClasses.add(cur);
                 }
             }
         } catch (IOException e) {
             throw new GeneratorException("Failed to generate code: ", e);
         }
+        completeGeneration(allGeneratedClasses, args.getOutputDir());
     }
 
     private void generateFromDirectory(final File inputDir, final File outputDir, final List<String> packageFilters) throws IOException {
@@ -73,8 +77,9 @@ public abstract class BaseGenerator implements Generator {
         allClasses.addAll(killbillListener.getAllClassesEnumOrInterfaces());
     }
 
+    protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
     protected abstract void generateClass(final ClassEnumOrInterface obj, final File outputDir) throws GeneratorException;
-
+    protected abstract void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
 
     protected static final String camelToUnderscore(final String input) {
         return UPPER_CAMEL.to(LOWER_UNDERSCORE, input);
