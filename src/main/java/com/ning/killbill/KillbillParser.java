@@ -44,7 +44,7 @@ public class KillbillParser {
 
 
     private static void parserDebug() throws Exception {
-        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/SimpleClass");
+        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/ClassWithAnnotation");
         JavaLexer lexer = new JavaLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JavaParser parser = new JavaParser(tokens);

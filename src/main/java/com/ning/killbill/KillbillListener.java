@@ -48,7 +48,6 @@ public class KillbillListener extends JavaBaseListener {
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
     private MethodOrCtor currentMethodOrCtor;
     private List<String> currentMethodOrCtorModifiers;
-    private List<String> currentClassesEnumOrInterfacesModifiers;
     private List<Annotation> currentNonParameterAnnotations;
     private List<Annotation> currentParametersAnnotations;
     private int curInMethodBodyLevel;
@@ -76,7 +75,6 @@ public class KillbillListener extends JavaBaseListener {
         this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
         this.currentMethodOrCtor = null;
         this.currentMethodOrCtorModifiers = null;
-        this.currentClassesEnumOrInterfacesModifiers = null;
         this.currentParametersAnnotations = null;
         this.currentNonParameterAnnotations = null;
         this.packageName = null;
@@ -165,7 +163,7 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("** Entering enterClassDeclaration " + ctx.getText());
         if (ctx.normalClassDeclaration() != null) {
-            final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalClassDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.CLASS, isIncludedInClassesEnumOrInterfacesModifier("abstract"));
+            final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalClassDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.CLASS, isIncludedInMethodOrCtorModifier("abstract"));
             currentClassesEnumOrInterfaces.push(classEnumOrInterface);
             final TypeContext superClass = ctx.normalClassDeclaration().type();
             if (superClass != null) {
@@ -372,7 +370,7 @@ public class KillbillListener extends JavaBaseListener {
 
     /*
     *
-    * *************************************************  CURRENT MODIFIERS FOR METHODS /CTOR *********************************************
+    * *************************************************  CURRENT MODIFIERS FOR CLASSES *********************************************
     *
     */
     @Override
@@ -381,7 +379,7 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
         log.debug("** Entering enterClassOrInterfaceDeclaration" + ctx.getText());
-        currentClassesEnumOrInterfacesModifiers = new ArrayList<String>();
+        currentMethodOrCtorModifiers = new ArrayList<String>();
     }
 
     @Override
@@ -390,7 +388,7 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
 
-        currentClassesEnumOrInterfacesModifiers = null;
+        currentMethodOrCtorModifiers = null;
         log.debug("** Exiting exitClassOrInterfaceDeclaration" + ctx.getText());
     }
 
@@ -405,7 +403,7 @@ public class KillbillListener extends JavaBaseListener {
         if (ctx.classOrInterfaceModifier()  != null && ctx.classOrInterfaceModifier().size() > 0) {
             for (ClassOrInterfaceModifierContext cur : ctx.classOrInterfaceModifier()) {
                 if (cur.annotation() == null) {
-                    currentClassesEnumOrInterfacesModifiers.add(cur.getText());
+                    currentMethodOrCtorModifiers.add(cur.getText());
                 }
             }
         }
@@ -586,9 +584,6 @@ public class KillbillListener extends JavaBaseListener {
         return isIncludedIModifier(currentMethodOrCtorModifiers, modifiers);
     }
 
-    private boolean isIncludedInClassesEnumOrInterfacesModifier(final String... modifiers) {
-        return isIncludedIModifier(currentClassesEnumOrInterfacesModifiers, modifiers);
-    }
 
     private static boolean isIncludedIModifier(final List<String> modiferList, final String... modifiers) {
         if (modiferList == null) {

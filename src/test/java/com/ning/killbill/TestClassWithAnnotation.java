@@ -18,7 +18,7 @@ import static org.testng.Assert.assertNotNull;
 public class TestClassWithAnnotation extends TestBase {
 
 
-    @Test(groups = "fast", enabled=false)
+    @Test(groups = "fast")
     public void testClassWithAnnotation() {
 
 
@@ -53,9 +53,9 @@ public class TestClassWithAnnotation extends TestBase {
         assertNull(ctor.getAnnotations().get(0).getValue());
 
         assertEquals(testClass.getSuperInterfaces().size(), 0);
-        assertNotNull(testClass.getSuperBaseClass());
+        assertNull(testClass.getSuperBaseClass());
 
-        assertEquals(testClass.getFields().size(), 3);
+        assertEquals(testClass.getFields().size(), 2);
         Field fAccountId = getField("accountId", testClass.getFields());
         assertNotNull(fAccountId);
         assertEquals(fAccountId.getName(), "accountId");
