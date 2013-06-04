@@ -8,13 +8,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ning.killbill.JavaLexer;
 import com.ning.killbill.JavaParser;
@@ -31,6 +31,8 @@ import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 
 public abstract class BaseGenerator implements Generator {
+
+    protected Logger log = LoggerFactory.getLogger(BaseGenerator.class);
 
     final List<ClassEnumOrInterface> allClasses;
 
@@ -73,12 +75,16 @@ public abstract class BaseGenerator implements Generator {
     }
 
     private void generateFromFile(final File input, final File outputDir) throws IOException {
+        log.info("********************************   Parsing file " + input.getAbsoluteFile());
+
         final KillbillListener killbillListener = parseFile(input.getAbsolutePath());
         allClasses.addAll(killbillListener.getAllClassesEnumOrInterfaces());
     }
 
     protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
+
     protected abstract void generateClass(final ClassEnumOrInterface obj, final File outputDir) throws GeneratorException;
+
     protected abstract void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
 
     protected static final String camelToUnderscore(final String input) {

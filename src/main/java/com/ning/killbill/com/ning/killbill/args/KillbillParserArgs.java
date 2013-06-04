@@ -26,14 +26,14 @@ public class KillbillParserArgs {
     @Parameter(names = {"-p", "--packageFilter"}, variableArity = true, description ="A optional filter list of java packages")
     private List<String> packagesFilter = new ArrayList<String>();
 
-    @Parameter(names = {"-l", "--language"}, description ="The target language for the classes created", required = true)
-    private LANGUAGE language;
+    @Parameter(names = {"-t", "--target"}, description ="The target generator", required = true)
+    private TARGET_GENERATOR targetGenerator;
 
 
-    public enum LANGUAGE {
-        RUBY,
-        JRUBY,
-        PHP
+    public enum TARGET_GENERATOR {
+        JRUBY_PLUGIN,
+        RUBY_CLIENT_API,
+        PHP_CLIENT_API
     }
 
     public URI getInput() {
@@ -48,8 +48,8 @@ public class KillbillParserArgs {
         return packagesFilter;
     }
 
-    public LANGUAGE getLanguage() {
-        return language;
+    public TARGET_GENERATOR getTargetGenerator() {
+        return targetGenerator;
     }
 
 

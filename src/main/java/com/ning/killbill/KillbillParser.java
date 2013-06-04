@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
-import com.ning.killbill.generators.LanguageGenerator;
+import com.ning.killbill.generators.DistpatchGenerator;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Joiner;
@@ -20,18 +20,28 @@ public class KillbillParser {
 
     public final static Logger logger = LoggerFactory.getLogger(KillbillParser.class);
 
+    private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/InterfaceWithExtendGenerics";
+
+    private final static boolean DEBUG_MODE = false;
+
+
     public static void main(String[] args) throws Exception {
 
-        //parserDebug();
+        if (DEBUG_MODE) {
+            parserDebug();
+            return;
+        }
+
+
         final KillbillParserArgs kbParserArgs = parseArguments(args);
 
         logger.info("KillbillParser input = " + kbParserArgs.getInput() +
                     ", outputDir = " + kbParserArgs.getOutputDir().getAbsoluteFile() +
                     ", packagesFilter = " + Joiner.on(", ").join(kbParserArgs.getPackagesFilter()) +
-                    ", language = " + kbParserArgs.getLanguage());
+                    ", language = " + kbParserArgs.getTargetGenerator());
 
 
-        final LanguageGenerator gen = new LanguageGenerator();
+        final DistpatchGenerator gen = new DistpatchGenerator();
         gen.generate(kbParserArgs);
     }
 
@@ -44,20 +54,20 @@ public class KillbillParser {
 
 
     private static void parserDebug() throws Exception {
-        ANTLRInputStream input = new ANTLRFileStream("/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/ClassWithAnnotation");
+        ANTLRInputStream input = new ANTLRFileStream(RESOURCE_DEBUG_FILE);
         JavaLexer lexer = new JavaLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JavaParser parser = new JavaParser(tokens);
         parser.setBuildParseTree(true);
         RuleContext tree = parser.compilationUnit();
+
+        tree.inspect(parser); // show in gui
+        System.out.println(tree.toStringTree(parser));
         ParseTreeWalker walker = new ParseTreeWalker();
         KillbillListener listener = new KillbillListener();
         walker.walk(listener, tree);
         System.out.println("**** RESULT: *****");
         System.out.println(listener.toString());
-
-        tree.inspect(parser); // show in gui
-        System.out.println(tree.toStringTree(parser));
 
     }
 }

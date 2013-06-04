@@ -2,8 +2,10 @@ package com.ning.killbill.generators.ruby;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URL;
 import java.util.List;
@@ -17,7 +19,7 @@ import com.ning.killbill.objects.Field;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
-public class RubyGenerator extends BaseGenerator {
+public class RubyClientApiGenerator extends BaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
 
@@ -31,7 +33,7 @@ public class RubyGenerator extends BaseGenerator {
 
     private int curIndent = 0;
 
-    public RubyGenerator() {
+    public RubyClientApiGenerator() {
         this.curIndent = 0;
     }
 
@@ -109,9 +111,17 @@ public class RubyGenerator extends BaseGenerator {
 
     private void writeLicense(final File output) throws GeneratorException {
         try {
+
             final URL licenseUrl = Resources.getResource(LICENSE_NAME);
+
+            final OutputStream out = new FileOutputStream(output);
+            Resources.copy(licenseUrl, out);
+
+            /*
+            System.out.println("**************************  LICENSE URL " +  licenseUrl + "**************************** " + licenseUrl.getFile());
             final File license = new File(licenseUrl.getFile());
             Files.copy(license, output);
+            */
         } catch (IllegalArgumentException e) {
             throw new GeneratorException("Cannot find license file " + LICENSE_NAME, e);
         } catch (IOException e) {
