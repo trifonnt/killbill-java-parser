@@ -6,11 +6,11 @@ public final class Field {
 
 
     private final String name;
-    private final String type;
+    private final Type type;
 
     private final List<Annotation> annotations;
 
-    public Field(final String name, final String type, final List<Annotation> annotations) {
+    public Field(final String name, final Type type, final List<Annotation> annotations) {
         this.name = name;
         this.type = type;
         this.annotations = annotations;
@@ -20,7 +20,7 @@ public final class Field {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 

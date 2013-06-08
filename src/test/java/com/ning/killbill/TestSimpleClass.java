@@ -42,66 +42,66 @@ public class TestSimpleClass extends TestBase {
         Method getKey = getMethod("getKey", testClass.getMethods());
         assertNotNull(getKey);
         assertTrue(getKey.isGetter());
-        assertEquals(getKey.getReturnValueType(), "java.lang.String");
+        assertEquals(getKey.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(getKey.getOrderedArguments().size(), 0);
 
         Method hashCode = getMethod("hashCode", testClass.getMethods());
         assertNotNull(hashCode);
         assertFalse(hashCode.isGetter());
-        assertEquals(hashCode.getReturnValueType(), "int");
+        assertEquals(hashCode.getReturnValueType().getBaseType(), "int");
         assertEquals(hashCode.getOrderedArguments().size(), 0);
 
         Method mEquals = getMethod("equals", testClass.getMethods());
         assertNotNull(mEquals);
         assertFalse(mEquals.isGetter());
-        assertEquals(mEquals.getReturnValueType(), "boolean");
+        assertEquals(mEquals.getReturnValueType().getBaseType(), "boolean");
         assertEquals(mEquals.getOrderedArguments().size(), 1);
 
         Field argument = mEquals.getOrderedArguments().get(0);
-        assertEquals(argument.getType(), "java.lang.Object");
+        assertEquals(argument.getType().getBaseType(), "java.lang.Object");
         assertEquals(argument.getName(), "o");
 
 
         Method mToString = getMethod("toString", testClass.getMethods());
         assertNotNull(mToString);
         assertFalse(mToString.isGetter());
-        assertEquals(mToString.getReturnValueType(), "java.lang.String");
+        assertEquals(mToString.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(mToString.getOrderedArguments().size(), 0);
 
         Method mGetIsUpdatable = getMethod("getIsUpdatable", testClass.getMethods());
         assertNotNull(mGetIsUpdatable);
         assertTrue(mGetIsUpdatable.isGetter());
-        assertEquals(mGetIsUpdatable.getReturnValueType(), "java.lang.Boolean");
+        assertEquals(mGetIsUpdatable.getReturnValueType().getBaseType(), "java.lang.Boolean");
         assertEquals(mGetIsUpdatable.getOrderedArguments().size(), 0);
 
         Method mGetValue = getMethod("getValue", testClass.getMethods());
         assertNotNull(mGetValue);
         assertTrue(mGetValue.isGetter());
-        assertEquals(mGetValue.getReturnValueType(), "int");
+        assertEquals(mGetValue.getReturnValueType().getBaseType(), "int");
         assertEquals(mGetValue.getOrderedArguments().size(), 0);
 
         Method mGetKey = getMethod("getKey", testClass.getMethods());
         assertNotNull(mGetKey);
         assertTrue(mGetKey.isGetter());
-        assertEquals(mGetKey.getReturnValueType(), "java.lang.String");
+        assertEquals(mGetKey.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(mGetKey.getOrderedArguments().size(), 0);
 
         Method meMthodWithThreeArgs = getMethod("methodWithThreeArgs", testClass.getMethods());
         assertNotNull(meMthodWithThreeArgs);
         assertFalse(meMthodWithThreeArgs.isGetter());
-        assertEquals(meMthodWithThreeArgs.getReturnValueType(), "void");
+        assertEquals(meMthodWithThreeArgs.getReturnValueType().getBaseType(), "void");
         assertEquals(meMthodWithThreeArgs.getOrderedArguments().size(), 3);
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(0);
-        assertEquals(argument.getType(), "java.lang.Boolean");
+        assertEquals(argument.getType().getBaseType(), "java.lang.Boolean");
         assertEquals(argument.getName(), "b");
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(1);
-        assertEquals(argument.getType(), "int");
+        assertEquals(argument.getType().getBaseType(), "int");
         assertEquals(argument.getName(), "foo");
 
         argument = meMthodWithThreeArgs.getOrderedArguments().get(2);
-        assertEquals(argument.getType(), "java.lang.Object");
+        assertEquals(argument.getType().getBaseType(), "java.lang.Object");
         assertEquals(argument.getName(), "o");
     }
 

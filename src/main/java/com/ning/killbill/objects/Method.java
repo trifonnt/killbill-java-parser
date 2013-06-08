@@ -4,9 +4,9 @@ import java.util.List;
 
 public final class Method extends MethodOrCtor {
 
-    private final String returnValueType;
+    private final Type returnValueType;
 
-    public Method(final String name, final String returnValueType, final boolean isAbstract, final List<Annotation> annotations) {
+    public Method(final String name, final Type returnValueType, final boolean isAbstract, final List<Annotation> annotations) {
         super(name, isAbstract, annotations);
         this.returnValueType = returnValueType;
     }
@@ -15,7 +15,7 @@ public final class Method extends MethodOrCtor {
         return (name.startsWith("get") || name.startsWith("is"));
     }
 
-    public String getReturnValueType() {
+    public Type getReturnValueType() {
         return returnValueType;
     }
 

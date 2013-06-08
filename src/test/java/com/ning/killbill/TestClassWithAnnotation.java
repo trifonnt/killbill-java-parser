@@ -35,14 +35,14 @@ public class TestClassWithAnnotation extends TestBase {
         assertEquals(ctor.getOrderedArguments().size(), 2);
 
         Field argument = ctor.getOrderedArguments().get(0);
-        assertEquals(argument.getType(), "java.lang.String");
+        assertEquals(argument.getType().getBaseType(), "java.lang.String");
         assertEquals(argument.getName(), "accountId");
         assertEquals(argument.getAnnotations().size(), 1);
         assertEquals(argument.getAnnotations().get(0).getName(), "JsonProperty");
         assertEquals(argument.getAnnotations().get(0).getValue(), "accountId");
 
         argument = ctor.getOrderedArguments().get(1);
-        assertEquals(argument.getType(), "java.lang.String");
+        assertEquals(argument.getType().getBaseType(), "java.lang.String");
         assertEquals(argument.getName(), "email");
         assertEquals(argument.getAnnotations().size(), 1);
         assertEquals(argument.getAnnotations().get(0).getName(), "JsonProperty");
@@ -59,7 +59,7 @@ public class TestClassWithAnnotation extends TestBase {
         Field fAccountId = getField("accountId", testClass.getFields());
         assertNotNull(fAccountId);
         assertEquals(fAccountId.getName(), "accountId");
-        assertEquals(fAccountId.getType(), "java.lang.String");
+        assertEquals(fAccountId.getType().getBaseType(), "java.lang.String");
         assertEquals(fAccountId.getAnnotations().size(), 1);
         assertEquals(fAccountId.getAnnotations().get(0).getName(), "MyFieldAnnotation");
         assertEquals(fAccountId.getAnnotations().get(0).getValue(), "yeah");
@@ -67,7 +67,7 @@ public class TestClassWithAnnotation extends TestBase {
         Field fEmail = getField("email", testClass.getFields());
         assertNotNull(fEmail);
         assertEquals(fEmail.getName(), "email");
-        assertEquals(fEmail.getType(), "java.lang.String");
+        assertEquals(fEmail.getType().getBaseType(), "java.lang.String");
         assertEquals(fEmail.getAnnotations().size(), 0);
 
         assertEquals(testClass.getMethods().size(), 3);

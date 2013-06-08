@@ -30,27 +30,28 @@ public class TestInterfaceWithGenericMethods extends TestBase {
         Method refreshOverdueStateFor = getMethod("refreshOverdueStateFor", testClass.getMethods());
         assertNotNull(refreshOverdueStateFor);
         assertFalse(refreshOverdueStateFor.isGetter());
-        assertEquals(refreshOverdueStateFor.getReturnValueType(), "com.ning.billing.overdue.OverdueState");
+        assertEquals(refreshOverdueStateFor.getReturnValueType().getBaseType(), "com.ning.billing.overdue.OverdueState");
+        // TODO This currently fails as the KillbillListener evaluates the generic too late and the mapping is not present at the time  (enterTypeParameters is called too late)
+        //assertEquals(refreshOverdueStateFor.getReturnValueType().getGenericType(), "com.ning.billing.overdue.Blockable");
         assertEquals(refreshOverdueStateFor.getOrderedArguments().size(), 2);
 
         assertEquals(refreshOverdueStateFor.getOrderedArguments().get(0).getName(), "overdueable");
-        assertEquals(refreshOverdueStateFor.getOrderedArguments().get(0).getType(), "com.ning.billing.junction.api.Blockable");
+        assertEquals(refreshOverdueStateFor.getOrderedArguments().get(0).getType().getBaseType(), "com.ning.billing.junction.api.Blockable");
         assertEquals(refreshOverdueStateFor.getOrderedArguments().get(1).getName(), "context");
-        assertEquals(refreshOverdueStateFor.getOrderedArguments().get(1).getType(), "com.ning.billing.util.callcontext.CallContext");
+        assertEquals(refreshOverdueStateFor.getOrderedArguments().get(1).getType().getBaseType(), "com.ning.billing.util.callcontext.CallContext");
 
-        // T overdueable, BillingState<T> state, CallContext context
         Method setOverrideBillingStateForAccount = getMethod("setOverrideBillingStateForAccount", testClass.getMethods());
         assertNotNull(setOverrideBillingStateForAccount);
         assertFalse(setOverrideBillingStateForAccount.isGetter());
-        assertEquals(setOverrideBillingStateForAccount.getReturnValueType(), "void");
+        assertEquals(setOverrideBillingStateForAccount.getReturnValueType().getBaseType(), "void");
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().size(), 3);
 
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(0).getName(), "overdueable");
-        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(0).getType(), "com.ning.billing.junction.api.Blockable");
+        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(0).getType().getBaseType(), "com.ning.billing.junction.api.Blockable");
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(1).getName(), "state");
-        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(1).getType(), "com.ning.billing.overdue.config.api.BillingState");
+        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(1).getType().getBaseType(), "com.ning.billing.overdue.config.api.BillingState");
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(2).getName(), "context");
-        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(2).getType(), "com.ning.billing.util.callcontext.CallContext");
+        assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(2).getType().getBaseType(), "com.ning.billing.util.callcontext.CallContext");
 
     }
 

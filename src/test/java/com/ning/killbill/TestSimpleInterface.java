@@ -38,16 +38,16 @@ public class TestSimpleInterface extends TestBase {
         assertNotNull(toMutableAccountData);
         assertFalse(toMutableAccountData.isGetter());
         assertEquals(toMutableAccountData.getOrderedArguments().size(), 0);
-        assertEquals(toMutableAccountData.getReturnValueType(), "com.ning.billing.account.api.MutableAccountData");
+        assertEquals(toMutableAccountData.getReturnValueType().getBaseType(), "com.ning.billing.account.api.MutableAccountData");
 
         Method mergeWithDelegate = getMethod("mergeWithDelegate", testInterface.getMethods());
         assertNotNull(mergeWithDelegate);
         assertFalse(mergeWithDelegate.isGetter());
         assertEquals(mergeWithDelegate.getOrderedArguments().size(), 1);
-        assertEquals(mergeWithDelegate.getReturnValueType(), "com.ning.billing.account.api.Account");
+        assertEquals(mergeWithDelegate.getReturnValueType().getBaseType(), "com.ning.billing.account.api.Account");
 
         Field argument = mergeWithDelegate.getOrderedArguments().get(0);
-        assertEquals(argument.getType(), "com.ning.billing.account.api.Account");
+        assertEquals(argument.getType().getBaseType(), "com.ning.billing.account.api.Account");
         assertEquals(argument.getName(), "delegate");
     }
 

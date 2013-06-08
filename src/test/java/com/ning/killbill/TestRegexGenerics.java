@@ -1,7 +1,6 @@
 package com.ning.killbill;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -20,5 +19,6 @@ public class TestRegexGenerics {
         m = KillbillListener.GENERIC_PATTERN.matcher("Blockable<T>");
         assertTrue(m.matches());
         Assert.assertEquals(m.group(1), "Blockable");
+        Assert.assertEquals(m.group(2), "T");
     }
 }

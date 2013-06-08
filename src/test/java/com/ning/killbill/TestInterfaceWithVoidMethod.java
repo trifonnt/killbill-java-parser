@@ -30,7 +30,7 @@ public class TestInterfaceWithVoidMethod extends TestBase {
         assertNotNull(updateAccount);
         assertFalse(updateAccount.isGetter());
         assertEquals(updateAccount.getOrderedArguments().size(), 2);
-        assertEquals(updateAccount.getReturnValueType(), "void");
+        assertEquals(updateAccount.getReturnValueType().getBaseType(), "void");
     }
 
         @Override

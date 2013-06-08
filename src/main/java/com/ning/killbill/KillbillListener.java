@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.ning.killbill.JavaParser.AnnotationContext;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.ClassOrInterfaceModifierContext;
+import com.ning.killbill.JavaParser.ClassOrInterfaceTypeContext;
 import com.ning.killbill.JavaParser.EnumConstantContext;
 import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
@@ -32,12 +33,13 @@ import com.ning.killbill.JavaParser.TypeParameterContext;
 import com.ning.killbill.JavaParser.VariableDeclaratorContext;
 import com.ning.killbill.JavaParser.VariableDeclaratorsContext;
 import com.ning.killbill.objects.Annotation;
-import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.ClassEnumOrInterface.ClassEnumOrInterfaceType;
 import com.ning.killbill.objects.Constructor;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.Method;
 import com.ning.killbill.objects.MethodOrCtor;
+import com.ning.killbill.objects.Type;
 
 import com.google.common.base.Joiner;
 
@@ -45,9 +47,12 @@ public class KillbillListener extends JavaBaseListener {
 
     public static final String JAVA_LANG = "java.lang.";
 
-    public static Pattern GENERIC_PATTERN  = Pattern.compile("(\\w*)(?:<.*>){0,1}\\s*");
+    public static Pattern GENERIC_PATTERN = Pattern.compile("(\\w*)(?:<(.*)>){0,1}\\s*");
 
     public static final String UNDEFINED_GENERIC = "Undefined";
+
+
+    private static final Type VOID_TYPE = new Type("void");
 
     Logger log = LoggerFactory.getLogger(KillbillListener.class);
 
@@ -151,7 +156,7 @@ public class KillbillListener extends JavaBaseListener {
         currentClassesEnumOrInterfaces.push(classEnumOrInterface);
         if (ctx.normalInterfaceDeclaration().typeList() != null) {
             for (TypeContext cur : ctx.normalInterfaceDeclaration().typeList().type()) {
-                classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+                classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()).getBaseType());
             }
         }
     }
@@ -174,11 +179,11 @@ public class KillbillListener extends JavaBaseListener {
 
     }
 
-   /*
-    *
-    * *************************************************  CLASS *********************************************
-    *
-    */
+    /*
+     *
+     * *************************************************  CLASS *********************************************
+     *
+     */
     @Override
     public void enterClassDeclaration(ClassDeclarationContext ctx) {
         if (curInMethodBodyLevel > 0) {
@@ -191,11 +196,11 @@ public class KillbillListener extends JavaBaseListener {
             currentClassesEnumOrInterfaces.push(classEnumOrInterface);
             final TypeContext superClass = ctx.normalClassDeclaration().type();
             if (superClass != null) {
-                classEnumOrInterface.addSuperClass(getFullyQualifiedType(superClass.getText()));
+                classEnumOrInterface.addSuperClass(getFullyQualifiedType(superClass.getText()).getBaseType());
             }
             if (ctx.normalClassDeclaration().typeList() != null) {
                 for (TypeContext cur : ctx.normalClassDeclaration().typeList().type()) {
-                    classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()));
+                    classEnumOrInterface.addSuperInterface(getFullyQualifiedType(cur.getText()).getBaseType());
                 }
             }
         }
@@ -246,7 +251,6 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-
     /*
     *
     * *************************************************  METHODS IFCE *********************************************
@@ -259,7 +263,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterInterfaceMethodOrFieldDecl" + ctx.getText());
 
-        final String returnValueType = (ctx.type().primitiveType() != null) ?ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
+        final String returnValueType = (ctx.type().primitiveType() != null) ? ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
         currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
     }
 
@@ -281,7 +285,7 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
         log.debug("** Entering enterVoidInterfaceMethodDeclaratorRest" + ctx.getText());
-        currentMethodOrCtor = new Method(((InterfaceMemberDeclContext) ctx.getParent()).Identifier().getText(), "void", true, currentNonParameterAnnotations);
+        currentMethodOrCtor = new Method(((InterfaceMemberDeclContext) ctx.getParent()).Identifier().getText(), VOID_TYPE, true, currentNonParameterAnnotations);
     }
 
     @Override
@@ -301,7 +305,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterInterfaceGenericMethodDecl" + ctx.getText());
         String returnValueType = (ctx.type() == null) ? "void" :
-                                       ((ctx.type().primitiveType() != null) ?ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText());
+                                 ((ctx.type().primitiveType() != null) ? ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText());
 
 
         /*
@@ -338,7 +342,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterMethodDeclaration" + ctx.getText());
         if (!isIncludedInMethodOrCtorModifier("private", "protected", "static")) {
-            final TypeContext typeContext =  ((MemberDeclarationContext) ctx.getParent()).type();
+            final TypeContext typeContext = ((MemberDeclarationContext) ctx.getParent()).type();
             final String returnValueType = (typeContext.primitiveType() != null) ? typeContext.primitiveType().getText() : typeContext.classOrInterfaceType().getText();
             currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
         }
@@ -365,7 +369,7 @@ public class KillbillListener extends JavaBaseListener {
 
         if (!isIncludedInMethodOrCtorModifier("private", "protected", "static")) {
             MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
-            currentMethodOrCtor = new Method(meberDecl.Identifier().getText(), "void", isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
+            currentMethodOrCtor = new Method(meberDecl.Identifier().getText(), VOID_TYPE, isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
         }
 
     }
@@ -389,7 +393,8 @@ public class KillbillListener extends JavaBaseListener {
     * *************************************************  CONSTRUCTOR *********************************************
     *
     */
-    @Override public void enterConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
+    @Override
+    public void enterConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
         if (curInMethodBodyLevel > 0) {
             return;
         }
@@ -398,7 +403,8 @@ public class KillbillListener extends JavaBaseListener {
         currentMethodOrCtor = new Constructor(ctor.Identifier().getText(), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
     }
 
-    @Override public void exitConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
+    @Override
+    public void exitConstructorDeclaratorRest(JavaParser.ConstructorDeclaratorRestContext ctx) {
         if (curInMethodBodyLevel > 0) {
             return;
         }
@@ -411,13 +417,13 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-
     /*
     *
     * ************************************************* MEMBER FIELDS *********************************************
     *
     */
-    @Override public void enterFieldDeclaration(JavaParser.FieldDeclarationContext ctx) {
+    @Override
+    public void enterFieldDeclaration(JavaParser.FieldDeclarationContext ctx) {
         if (curInMethodBodyLevel > 0) {
             return;
         }
@@ -435,14 +441,14 @@ public class KillbillListener extends JavaBaseListener {
         }
     }
 
-    @Override public void exitFieldDeclaration(JavaParser.FieldDeclarationContext ctx) {
+    @Override
+    public void exitFieldDeclaration(JavaParser.FieldDeclarationContext ctx) {
         if (curInMethodBodyLevel > 0) {
             return;
         }
         // Nothing to do.
         log.debug("** Exiting exitFieldDeclaration" + ctx.getText());
     }
-
 
 
     /*
@@ -477,7 +483,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterClassOrInterfaceModifier" + ctx.getText());
 
-        if (ctx.classOrInterfaceModifier()  != null && ctx.classOrInterfaceModifier().size() > 0) {
+        if (ctx.classOrInterfaceModifier() != null && ctx.classOrInterfaceModifier().size() > 0) {
             for (ClassOrInterfaceModifierContext cur : ctx.classOrInterfaceModifier()) {
                 if (cur.annotation() == null) {
                     currentMethodOrCtorModifiers.add(cur.getText());
@@ -488,7 +494,7 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void exitClassOrInterfaceModifiers(JavaParser.ClassOrInterfaceModifiersContext ctx) {
-      // Nothing to do
+        // Nothing to do
     }
 
     /*
@@ -547,13 +553,11 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-
-
-   /*
-    *
-    * *************************************************  GENERIC TYPE PARAMETERS *********************************************
-    *
-    */
+    /*
+     *
+     * *************************************************  GENERIC TYPE PARAMETERS *********************************************
+     *
+     */
     @Override
     public void enterTypeParameters(JavaParser.TypeParametersContext ctx) {
         if (curInMethodBodyLevel > 0) {
@@ -645,7 +649,25 @@ public class KillbillListener extends JavaBaseListener {
             log.warn("enterFormalParameters : Found " + typeContext.classOrInterfaceType().Identifier().size() + " classOrInterfaceType for argument");
         }
 
-        final String parameterType = (typeContext.primitiveType() != null) ? typeContext.primitiveType().getText() : typeContext.classOrInterfaceType().Identifier().get(0).getText();
+        //final String parameterType = (typeContext.primitiveType() != null) ? typeContext.primitiveType().getText() : typeContext.classOrInterfaceType().Identifier().get(0).getText();
+
+        String parameterType = null;
+        if (typeContext.primitiveType() != null) {
+            parameterType = typeContext.primitiveType().getText();
+        } else {
+            final ClassOrInterfaceTypeContext classOrInterfaceTypeContext = typeContext.classOrInterfaceType();
+            parameterType = classOrInterfaceTypeContext.Identifier().get(0).getText();
+            String bracketedParam = null;
+            if (classOrInterfaceTypeContext.typeArguments() != null && classOrInterfaceTypeContext.typeArguments().size() > 0) {
+                bracketedParam =  classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type().classOrInterfaceType().Identifier().get(0).getText();
+            }
+            if (bracketedParam != null) {
+                parameterType = parameterType + "<" + bracketedParam+ ">";
+            }
+        }
+
+
+
         final FormalParameterDeclsRestContext formalParameterDeclsRestContext = ctx.formalParameterDeclsRest();
 
 
@@ -674,12 +696,12 @@ public class KillbillListener extends JavaBaseListener {
         final String annotationName = annotationContext.annotationName().getText();
         final String value = annotationContext.elementValue() != null ? annotationContext.elementValue().expression().primary().literal().getText() : null;
 
-        return new  Annotation(annotationName, stripQuoteFromValue(value));
+        return new Annotation(annotationName, stripQuoteFromValue(value));
     }
 
     private String stripQuoteFromValue(final String value) {
-        if (value != null && value.startsWith("\"") &&  (value.endsWith("\""))) {
-            return value.substring(1,value.length() -1);
+        if (value != null && value.startsWith("\"") && (value.endsWith("\""))) {
+            return value.substring(1, value.length() - 1);
         } else {
             return value;
         }
@@ -703,8 +725,40 @@ public class KillbillListener extends JavaBaseListener {
         return false;
     }
 
+    /**
+     * - Generic simple type, e.g : List<String>
+     * - Generic fully qualified type, e.g : List<java.lang.String>
+     * - Generic Parameter type, e.g : T
+     * - Generic Parameter Bracketed type, e.g : List<T>
+     *
+     * @param type the string type extracted from the parser
+     * @return the Type computed
+     */
+    private Type getFullyQualifiedType(final String type) {
+        String baseType;
+        String bracketPartIfAny = null;
+        Matcher m = KillbillListener.GENERIC_PATTERN.matcher(type);
+        if (!m.matches()) {
+            throw new RuntimeException(GENERIC_PATTERN + " does not match " + type);
+        }
+        baseType = m.group(1);
+        bracketPartIfAny = m.group(2);
 
-    private String getFullyQualifiedType(final String type) {
+        final String resolvedBaseType = resolveNonBracketedType(baseType);
+        final String resolvedBracketPartIfAny = bracketPartIfAny != null ? resolveNonBracketedType(bracketPartIfAny) : null;
+        return new Type(resolvedBaseType, resolvedBracketPartIfAny);
+    }
+
+    /**
+     * We can enter with the following:
+     * - Non generic simple type, e.g:  String, boolean, Foo
+     * - Non generic fully qualified type, e.g : java.lang.String
+     * - Generic Parameter type, e.g : T
+     *
+     * @param type the type to be resolved
+     * @return
+     */
+    private String resolveNonBracketedType(final String type) {
 
         // If primitive type nothing to do:
         if (type.equals("byte") ||
@@ -719,52 +773,52 @@ public class KillbillListener extends JavaBaseListener {
             return type;
         }
 
-        // Strip any generic
-        String nonGenericType;
-        Matcher m = KillbillListener.GENERIC_PATTERN.matcher(type);
-        if (!m.matches()) {
-            log.warn("Pattern for generics does not match " + type);
-            nonGenericType =  type;
-        } else {
-            nonGenericType = m.group(1);
-        }
-
-
-        // Look first into the method generic map to see if it is there
-        if (curTypeMethodParameters != null && curTypeMethodParameters.containsKey(nonGenericType)) {
-            nonGenericType = curTypeMethodParameters.get(nonGenericType);
-            // Continue
-        } else if (curTypeClassEnumOrInterfaceParameters != null && curTypeClassEnumOrInterfaceParameters.containsKey(nonGenericType)) {
-            nonGenericType = curTypeClassEnumOrInterfaceParameters.get(nonGenericType);
-            if (nonGenericType.equals(UNDEFINED_GENERIC)) {
-                // We can't resolve an interface which defines some Generics
-                return UNDEFINED_GENERIC;
-            }
-            // Continue
-        }
-
         // Is already fully qualified?
-        String[] parts = nonGenericType.split("\\.");
+        String[] parts = type.split("\\.");
         if (parts.length > 1) {
-            return nonGenericType;
+            return type;
+        }
+
+        final String resolvedGenericType = resolveGenericIfNeeded(type);
+        if (resolvedGenericType.equals(UNDEFINED_GENERIC)) {
+            return resolvedGenericType;
         }
 
         // Is that in the import List?
-        if (allImports.get(nonGenericType) != null) {
-            return allImports.get(nonGenericType);
+        if (allImports.get(resolvedGenericType) != null) {
+            return allImports.get(resolvedGenericType);
         }
 
         // If not, is that a java.lang?
         try {
 
-            final String className = JAVA_LANG + nonGenericType;
+            final String className = JAVA_LANG + resolvedGenericType;
             Class.forName(className);
             return className;
         } catch (ClassNotFoundException ignore) {
         }
 
         // Finally if we assume that file compiles, then add the current package
-        return packageName + "." + nonGenericType;
+        return packageName + "." + resolvedGenericType;
+    }
+
+
+    //
+    // This is not super smart, but just trying to figure if we have seen some generic declaration on our way through and if so, return the definition
+    //
+    private String resolveGenericIfNeeded(String input) {
+        // Look first into the method generic map to see if it is there
+        String result = input;
+        if (curTypeMethodParameters != null && curTypeMethodParameters.containsKey(input)) {
+            result = curTypeMethodParameters.get(input);
+        } else if (curTypeClassEnumOrInterfaceParameters != null && curTypeClassEnumOrInterfaceParameters.containsKey(input)) {
+            result = curTypeClassEnumOrInterfaceParameters.get(input);
+            if (result.equals(UNDEFINED_GENERIC)) {
+                //throw new RuntimeException("Undefined generic " + input);
+
+            }
+        }
+        return result;
     }
 
 
