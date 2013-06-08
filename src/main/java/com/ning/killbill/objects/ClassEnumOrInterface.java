@@ -15,6 +15,8 @@ public final class ClassEnumOrInterface {
     private final String name;
     private final ClassEnumOrInterfaceType type;
     private final List<String> superInterfaces;
+
+    private final String packageName;
     private String superBaseClass;
 
     private final boolean isAbstract;
@@ -27,10 +29,11 @@ public final class ClassEnumOrInterface {
     private final List<Constructor> ctors;
 
 
-    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type, final boolean anAbstract) {
+    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type, final String packageName, final boolean anAbstract) {
         this.name = name;
         this.type = type;
-        isAbstract = anAbstract;
+        this.packageName = packageName;
+        this.isAbstract = anAbstract;
         this.methods = new ArrayList<Method>();
         this.ctors = new ArrayList<Constructor>();
         this.superInterfaces = new ArrayList<String>();
@@ -83,6 +86,10 @@ public final class ClassEnumOrInterface {
         return enumValues;
     }
 
+    public String getPackageName() {
+        return packageName;
+    }
+
     public List<Constructor> getCtors() {
         return ctors;
     }
@@ -105,6 +112,10 @@ public final class ClassEnumOrInterface {
 
     public boolean isAbstract() {
         return isAbstract;
+    }
+
+    public String getFullName() {
+        return packageName + "." + name;
     }
 
     @Override

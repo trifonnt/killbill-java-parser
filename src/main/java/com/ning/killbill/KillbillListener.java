@@ -147,7 +147,7 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Entering enterInterfaceDeclaration " + ctx.getText());
 
 
-        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalInterfaceDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.INTERFACE, true);
+        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalInterfaceDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.INTERFACE, packageName, false);
         currentClassesEnumOrInterfaces.push(classEnumOrInterface);
         if (ctx.normalInterfaceDeclaration().typeList() != null) {
             for (TypeContext cur : ctx.normalInterfaceDeclaration().typeList().type()) {
@@ -187,7 +187,7 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("** Entering enterClassDeclaration " + ctx.getText());
         if (ctx.normalClassDeclaration() != null) {
-            final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalClassDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.CLASS, isIncludedInMethodOrCtorModifier("abstract"));
+            final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.normalClassDeclaration().Identifier().getText(), ClassEnumOrInterfaceType.CLASS, packageName, isIncludedInMethodOrCtorModifier("abstract"));
             currentClassesEnumOrInterfaces.push(classEnumOrInterface);
             final TypeContext superClass = ctx.normalClassDeclaration().type();
             if (superClass != null) {
@@ -227,7 +227,7 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("** Entering enterEnumDeclaration " + ctx.getText());
 
-        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.Identifier().getText(), ClassEnumOrInterfaceType.ENUM, false);
+        final ClassEnumOrInterface classEnumOrInterface = new ClassEnumOrInterface(ctx.Identifier().getText(), ClassEnumOrInterfaceType.ENUM, packageName, false);
         currentClassesEnumOrInterfaces.push(classEnumOrInterface);
         final List<EnumConstantContext> enumValues = ctx.enumBody().enumConstants().enumConstant();
         for (EnumConstantContext cur : enumValues) {

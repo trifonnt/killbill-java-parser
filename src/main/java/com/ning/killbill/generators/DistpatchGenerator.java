@@ -1,6 +1,7 @@
 package com.ning.killbill.generators;
 
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
+import com.ning.killbill.generators.ruby.JRubyPluginGenerator;
 import com.ning.killbill.generators.ruby.RubyClientApiGenerator;
 
 public class DistpatchGenerator {
@@ -16,7 +17,7 @@ public class DistpatchGenerator {
                 gen = new RubyClientApiGenerator();
                 break;
             case JRUBY_PLUGIN:
-                gen = null;
+                gen = new JRubyPluginGenerator();
                 break;
             case PHP_CLIENT_API:
                 gen = null;

@@ -39,6 +39,12 @@ public class TestSimpleClass extends TestBase {
 
         assertEquals(testClass.getMethods().size(), 7);
 
+        Method getKey = getMethod("getKey", testClass.getMethods());
+        assertNotNull(getKey);
+        assertTrue(getKey.isGetter());
+        assertEquals(getKey.getReturnValueType(), "java.lang.String");
+        assertEquals(getKey.getOrderedArguments().size(), 0);
+
         Method hashCode = getMethod("hashCode", testClass.getMethods());
         assertNotNull(hashCode);
         assertFalse(hashCode.isGetter());
