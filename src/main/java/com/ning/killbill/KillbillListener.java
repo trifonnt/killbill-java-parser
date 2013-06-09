@@ -22,12 +22,15 @@ import com.ning.killbill.JavaParser.FormalParameterDeclsRestContext;
 import com.ning.killbill.JavaParser.ImportDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.InterfaceMemberDeclContext;
+import com.ning.killbill.JavaParser.InterfaceMethodDeclaratorRestContext;
 import com.ning.killbill.JavaParser.InterfaceMethodOrFieldDeclContext;
+import com.ning.killbill.JavaParser.InterfaceMethodOrFieldRestContext;
 import com.ning.killbill.JavaParser.MemberDeclContext;
 import com.ning.killbill.JavaParser.MemberDeclarationContext;
 import com.ning.killbill.JavaParser.ModifierContext;
 import com.ning.killbill.JavaParser.NormalInterfaceDeclarationContext;
 import com.ning.killbill.JavaParser.PackageDeclarationContext;
+import com.ning.killbill.JavaParser.QualifiedNameContext;
 import com.ning.killbill.JavaParser.TypeContext;
 import com.ning.killbill.JavaParser.TypeParameterContext;
 import com.ning.killbill.JavaParser.VariableDeclaratorContext;
@@ -330,6 +333,22 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
+    @Override
+    public void enterInterfaceMethodDeclaratorRest(JavaParser.InterfaceMethodDeclaratorRestContext ctx) {
+        log.debug("** Entering enterInterfaceMethodDeclaratorRest" + ctx.getText());
+        if (ctx.qualifiedNameList() != null) {
+            for (QualifiedNameContext cur : ctx.qualifiedNameList().qualifiedName()) {
+                final String exception = cur.Identifier().get(0).getText();
+                final String resolvedException = getFullyQualifiedType(exception).getBaseType();
+                currentMethodOrCtor.addException(resolvedException);
+            }
+        }
+    }
+
+    @Override public void exitInterfaceMethodDeclaratorRest(JavaParser.InterfaceMethodDeclaratorRestContext ctx) {
+        log.debug("** Exiting exitInterfaceMethodDeclaratorRest" + ctx.getText());
+    }
+
     /*
     *
     * *************************************************  METHODS CLASS *********************************************
@@ -385,6 +404,15 @@ public class KillbillListener extends JavaBaseListener {
             currentMethodOrCtor = null;
         }
         log.debug("** Exiting exitVoidMethodDeclaratorRest" + ctx.getText());
+    }
+
+    // TODO exceptions for class methods
+    @Override
+    public void enterMethodDeclaratorRest(JavaParser.MethodDeclaratorRestContext ctx) {
+    }
+
+    @Override
+    public void exitMethodDeclaratorRest(JavaParser.MethodDeclaratorRestContext ctx) {
     }
 
 

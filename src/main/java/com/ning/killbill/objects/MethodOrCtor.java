@@ -12,12 +12,20 @@ public abstract class MethodOrCtor {
 
     protected final List<Annotation> annotations;
 
+    protected final List<String> exceptions;
+
     public MethodOrCtor(final String name, final boolean isAbstract, final List<Annotation> annotations) {
         this.name = name;
         this.annotations = annotations;
         this.orderedArguments = new ArrayList<Field>();
+        this.exceptions = new ArrayList<String>();
         this.isAbstract = isAbstract;
     }
+
+    public void addException(String exception) {
+        exceptions.add(exception);
+    }
+
 
     public void addArgument(Field arg) {
         orderedArguments.add(arg);
@@ -37,5 +45,9 @@ public abstract class MethodOrCtor {
 
     public List<Annotation> getAnnotations() {
         return annotations;
+    }
+
+    public List<String> getExceptions() {
+        return exceptions;
     }
 }

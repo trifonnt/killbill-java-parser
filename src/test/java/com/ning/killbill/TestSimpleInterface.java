@@ -40,6 +40,10 @@ public class TestSimpleInterface extends TestBase {
         assertEquals(toMutableAccountData.getOrderedArguments().size(), 0);
         assertEquals(toMutableAccountData.getReturnValueType().getBaseType(), "com.ning.billing.account.api.MutableAccountData");
 
+        assertEquals(toMutableAccountData.getExceptions().size(), 2);
+        assertTrue(toMutableAccountData.getExceptions().contains("com.ning.billing.MyCrazyException"));
+        assertTrue(toMutableAccountData.getExceptions().contains("com.ning.billing.account.api.NoSuchAccount"));
+
         Method mergeWithDelegate = getMethod("mergeWithDelegate", testInterface.getMethods());
         assertNotNull(mergeWithDelegate);
         assertFalse(mergeWithDelegate.isGetter());

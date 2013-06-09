@@ -158,7 +158,14 @@ public class JRubyPluginGenerator extends BaseGenerator {
             writeWithIndentationAndNewLine("return res", w, 0);
 
             writeWithIndentationAndNewLine("rescue java.lang.Exception => e" , w, -INDENT_LEVEL);
-            writeWithIndentationAndNewLine("raise e.to_java", w, INDENT_LEVEL);
+
+            writeWithIndentationAndNewLine("if e.respond_to? :to_ruby", w, INDENT_LEVEL);
+            writeWithIndentationAndNewLine("raise e.to_ruby", w, INDENT_LEVEL);
+            writeWithIndentationAndNewLine("else", w, -INDENT_LEVEL);
+            // TODO
+            writeWithIndentationAndNewLine("raise ApiException.new(\"TODO\")", w, INDENT_LEVEL);
+            writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+
             writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
 
             writeWithIndentationAndNewLine("end" , w, -INDENT_LEVEL);

@@ -20,7 +20,7 @@ public class KillbillParser {
 
     public final static Logger logger = LoggerFactory.getLogger(KillbillParser.class);
 
-    private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/InterfaceWithExtendGenerics";
+    private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/OpenSource/killbill/killbill-java-parser/src/test/resources/SimpleInterface";
 
     private final static boolean DEBUG_MODE = false;
 

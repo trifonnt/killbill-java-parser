@@ -19,6 +19,7 @@ package com.ning.billing.account.api;
 import com.ning.billing.junction.api.Blockable;
 import com.ning.billing.util.entity.Entity;
 
+import com.ning.billing.MyCrazyException;
 /**
  * The interface <code>Account</code> represents an account within Killbill.
  * <p>
@@ -35,7 +36,7 @@ public interface Account extends AccountData, Entity, Blockable  {
      *
      * @return the mutable account data
      */
-    public MutableAccountData toMutableAccountData();
+    public MutableAccountData toMutableAccountData() throws NoSuchAccount, MyCrazyException;
 
     /**
      * The current account object will have its fields updated with those of the deleted account.

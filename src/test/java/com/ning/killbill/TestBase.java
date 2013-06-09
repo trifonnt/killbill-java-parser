@@ -47,6 +47,7 @@ public abstract class TestBase {
         return null;
     }
 
+
     protected Field getField(final String name, List<Field> fields) {
         for (Field cur : fields) {
             if (cur.getName().equals(name)) {
