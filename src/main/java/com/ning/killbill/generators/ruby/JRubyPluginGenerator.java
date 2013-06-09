@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.ClassEnumOrInterface;
+import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.Method;
 
 import com.google.common.collect.Lists;
@@ -71,16 +72,11 @@ public class JRubyPluginGenerator extends BaseGenerator {
             writeWithIndentationAndNewLine("include " + obj.getPackageName() + "." + obj.getName(), w, INDENT_LEVEL);
             writeNewLine(w);
 
-            generateAttributeAccessorFromGetterMethods(obj, flattenedMethods, w);
-
-            //generateInitializeFromGetterMethods(obj, flattenedMethods, w);
-            //generateInitializeBlockFromGetterMethods(obj, flattenedMethods, w);
-
-            writeWithIndentationAndNewLine("def initialize()", w, 0);
-            writeWithIndentationAndNewLine("end", w, 0);
-            writeNewLine(w);
-
-            generateToJava(obj, flattenedMethods, w);
+            if (obj.isInterface() && isApiFile(obj.getName())) {
+                generateForApi(obj, w, flattenedMethods);
+            } else {
+                generateForPojo(obj, w, flattenedMethods);
+            }
 
 
             writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
@@ -95,6 +91,102 @@ public class JRubyPluginGenerator extends BaseGenerator {
         } catch (IOException e) {
             throw new GeneratorException("Failed to generate file " + obj.getName(), e);
         }
+    }
+
+    private void generateForApi(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods) throws IOException, GeneratorException {
+        writeWithIndentationAndNewLine("def initialize(real_java_api)", w, 0);
+        writeWithIndentationAndNewLine("@real_java_api = real_java_api", w, INDENT_LEVEL);
+        writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+        writeNewLine(w);
+
+        for (final Method m : flattenedMethods) {
+            final String returnValue = m.getReturnValueType().getBaseType();
+            writeNewLine(w);
+            writeWithIndentation("java_signature 'Java::" + returnValue + " " + m.getName() + "(", w, 0);
+            boolean first = true;
+            for (Field f : m.getOrderedArguments()) {
+                if (!first) {
+                    writeAppend(", ", w);
+                }
+                writeAppend("Java::" + f.getType().getBaseType(), w);
+                first = false;
+            }
+            writeAppend(")'", w);
+            writeNewLine(w);
+
+            final String method_name = camelToUnderscore(m.getName());
+            writeWithIndentation("def " + method_name + "(", w, 0);
+            first = true;
+            for (Field f : m.getOrderedArguments()) {
+                if (!first) {
+                    writeAppend(", ", w);
+                }
+                writeAppend(f.getName(), w);
+                first = false;
+            }
+            writeAppend(")", w);
+            writeNewLine(w);
+
+            boolean firstArg = true;
+            for (Field f : m.getOrderedArguments()) {
+                if (firstArg) {
+                    writeWithIndentationAndNewLine("if !" + f.getName() + ".nil? && " + f.getName() + ".respond_to? :to_java", w, INDENT_LEVEL);
+                    firstArg = false;
+                } else {
+                    writeWithIndentationAndNewLine("if !" + f.getName() + ".nil? && " + f.getName() + ".respond_to? : to_java", w, 0);
+                }
+                writeWithIndentationAndNewLine(f.getName() + " = " + f.getName() + ".to_java", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+                writeNewLine(w);
+
+            }
+
+            writeWithIndentationAndNewLine("begin", w, 0);
+            writeWithIndentation("res = @real_java_api." + method_name + "(", w, INDENT_LEVEL);
+            first = true;
+            for (Field f : m.getOrderedArguments()) {
+                if (!first) {
+                    writeAppend(", ", w);
+                }
+                writeAppend(f.getName(), w);
+                first = false;
+            }
+            writeAppend(")'", w);
+            writeNewLine(w);
+            // conversion
+            generateToRuby("res", m.getReturnValueType().getBaseType(), m.getReturnValueType().getGenericType(), flattenedMethods, w, 0);
+            writeWithIndentationAndNewLine("return res", w, 0);
+
+            writeWithIndentationAndNewLine("rescue java.lang.Exception => e" , w, -INDENT_LEVEL);
+            writeWithIndentationAndNewLine("raise e.to_java", w, INDENT_LEVEL);
+            writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+
+            writeWithIndentationAndNewLine("end" , w, -INDENT_LEVEL);
+        }
+    }
+
+    private boolean isApiFile(final String fileName) {
+        return fileName.endsWith("Api");
+    }
+
+    private void generateForPojo(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods) throws IOException, GeneratorException {
+        generateAttributeAccessorFromGetterMethods(obj, flattenedMethods, w);
+
+        //generateInitializeFromGetterMethods(obj, flattenedMethods, w);
+        //generateInitializeBlockFromGetterMethods(obj, flattenedMethods, w);
+
+        writeWithIndentationAndNewLine("def initialize()", w, 0);
+        writeWithIndentationAndNewLine("end", w, 0);
+        writeNewLine(w);
+
+        generateToJava(obj, flattenedMethods, w);
+    }
+
+
+    private void generateToRuby(final String member, final String returnValueType, final String returnValueGeneric, final List<Method> flattenedMethods, final Writer w, int indentOffset) throws IOException, GeneratorException {
+        // TODO
+        writeWithIndentationAndNewLine(member + " = " + member, w, 0);
+
     }
 
     private void generateToJava(final ClassEnumOrInterface obj, final List<Method> flattenedMethods, final Writer w) throws IOException, GeneratorException {
@@ -125,7 +217,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
 
     private void writeConversionToJava(final String member, final String returnValueType, final String returnValueGeneric, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
 
-        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + returnValueType + "]" , w, indentOffset);
+        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + returnValueType + "]", w, indentOffset);
         if (returnValueType.equals("byte")) {
             // default jruby conversion should be fine
         } else if (returnValueType.equals("short") || returnValueType.equals("java.lang.Short")) {
@@ -159,8 +251,8 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("if " + member + ".nil?", w, 0);
                 writeWithIndentationAndNewLine(member + " = java.math.BigDecimal::ZERO", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("else", w, -INDENT_LEVEL);
-                writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w,  INDENT_LEVEL);
-                writeWithIndentationAndNewLine("end", w,  -INDENT_LEVEL);
+                writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("java.util.Date".equals(returnValueType)) {
                 // TODO STEPH
             } else if ("org.joda.time.DateTime".equals(returnValueType)) {
