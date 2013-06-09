@@ -66,6 +66,7 @@ public abstract class BaseGenerator implements Generator {
 
             for (ClassEnumOrInterface cur : allClasses) {
                 if (!cur.isAbstract()) {
+
                     log.info("Generating file for object " + cur.getName());
                     generateClass(cur, allClasses, args.getOutputDir());
                     allGeneratedClasses.add(cur);

@@ -38,7 +38,7 @@ public class KillbillParser {
         logger.info("KillbillParser input = " + kbParserArgs.getInput() +
                     ", outputDir = " + kbParserArgs.getOutputDir().getAbsoluteFile() +
                     ", packagesFilter = " + Joiner.on(", ").join(kbParserArgs.getPackagesFilter()) +
-                    ", language = " + kbParserArgs.getTargetGenerator());
+                    ", target = " + kbParserArgs.getTargetGenerator());
 
 
         final DistpatchGenerator gen = new DistpatchGenerator();
