@@ -196,7 +196,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                         final String jrubyPoJo = getJrubyPoJo(curException);
                         writeWithIndentationAndNewLine("raise " + jrubyPoJo + ".to_ruby(e)", w, INDENT_LEVEL);
                     } catch (GeneratorException e) {
-                        writeWithIndentationAndNewLine("raise ApiException.new(\"" + curException + ": #{e.msg if !e.msg.nil?}\")", w, INDENT_LEVEL);
+                        writeWithIndentationAndNewLine("raise ApiException.new(\"" + curException + ": #{e.msg unless e.msg.nil?}\")", w, INDENT_LEVEL);
                     }
                 }
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
@@ -275,7 +275,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
             writeWithIndentationAndNewLine("b_value = (" + member + ".java_kind_of? java.lang.Boolean) ? " + member + ".boolean_value : " + member, w, 0);
             writeWithIndentationAndNewLine("return b_value ? true : false", w, 0);
         } else if (returnValueType.equals("java.lang.Throwable")) {
-            writeWithIndentationAndNewLine(member + " = " + member + ".to_s if ! " + member + ".nil?", w, 0);
+            writeWithIndentationAndNewLine(member + " = " + member + ".to_s unless " + member + ".nil?", w, 0);
         } else {
             if ("java.lang.String".equals(returnValueType) ||
                 // TTO same thing as for to_java
@@ -283,7 +283,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
             } else if ("java.util.UUID".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? nil : uuid.to_s", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
-                writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? 0 : " + member + ".multiply(java.math.BigDecimal.valueOf(100)).to_s.to_i", w, 0);
+                writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? 0 : " + member + ".to_s.to_i", w, 0);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
                        "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
@@ -317,9 +317,9 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 // At this point if we can't find the class we throw
                 final ClassEnumOrInterface classEnumOrInterface = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrInterface.isEnum()) {
-                    writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(member + " = " + member + ".to_s unless " + member + ".nil?", w, 0);
                 } else {
-                    writeWithIndentationAndNewLine(member + " = " + getJrubyPoJo(returnValueType) + ".to_ruby(" + member + ") if !" + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(member + " = " + getJrubyPoJo(returnValueType) + ".to_ruby(" + member + ") unless " + member + ".nil?", w, 0);
                 }
             }
         }
@@ -383,21 +383,22 @@ public class JRubyPluginGenerator extends BaseGenerator {
         } else if (returnValueType.equals("boolean") || returnValueType.equals("java.lang.Boolean")) {
             writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? java.lang.Boolean.new(false) : java.lang.Boolean.new(" + member + ")", w, 0);
         } else if (returnValueType.equals("java.lang.Throwable")) {
-            writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
+            writeWithIndentationAndNewLine(member + " = " + member + ".to_s unless " + member + ".nil?", w, 0);
         } else {
             if ("java.lang.String".equals(returnValueType) ||
                 // TODO fix KB API really!
                 // We assume Object is a string in that case
                 "java.lang.Object".equals(returnValueType)) {
                 // default jruby conversion should be fine
-                writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
+                writeWithIndentationAndNewLine(member + " = " + member + ".to_s unless " + member + ".nil?", w, 0);
             } else if ("java.util.UUID".equals(returnValueType)) {
-                writeWithIndentationAndNewLine(member + " = java.util.UUID.fromString(" + member + ".to_s) if !" + member + ".nil?", w, 0);
+                writeWithIndentationAndNewLine(member + " = java.util.UUID.fromString(" + member + ".to_s) unless " + member + ".nil?", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if " + member + ".nil?", w, 0);
                 writeWithIndentationAndNewLine(member + " = java.math.BigDecimal::ZERO", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("else", w, -INDENT_LEVEL);
-                writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w, INDENT_LEVEL);
+                //writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".to_i)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
                        "java.util.Date".equals(returnValueType)) {
@@ -410,7 +411,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.LocalDate".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
-                writeWithIndentationAndNewLine(member + " = Java::org.joda.time.LocalDate.parse(" + member + ".to_s)", w, 0);
+                writeWithIndentationAndNewLine(member + " = Java::org.joda.time.LocalDate.parse(" + member + ".to_s)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTimeZone".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
@@ -431,9 +432,9 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrIfce.isEnum()) {
                     // m = "Java::"
-                    writeWithIndentationAndNewLine(member + " = \"Java::" + classEnumOrIfce.getFullName() + "::#{" + member + ".to_s}\" if !" + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(member + " = \"Java::" + classEnumOrIfce.getFullName() + "::#{" + member + ".to_s}\" unless " + member + ".nil?", w, 0);
                 } else {
-                    writeWithIndentationAndNewLine(member + " = " + member + ".to_java if !" + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(member + " = " + member + ".to_java unless " + member + ".nil?", w, 0);
                 }
             }
         }
