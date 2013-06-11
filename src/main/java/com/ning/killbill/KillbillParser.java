@@ -37,7 +37,7 @@ public class KillbillParser {
 
         logger.info("KillbillParser input = " + kbParserArgs.getInput() +
                     ", outputDir = " + kbParserArgs.getOutputDir().getAbsoluteFile() +
-                    ", packagesFilter = " + Joiner.on(", ").join(kbParserArgs.getPackagesFilter()) +
+                    ", packagesFilter = " + Joiner.on(", ").join(kbParserArgs.getPackagesParserFilter()) +
                     ", target = " + kbParserArgs.getTargetGenerator());
 
 

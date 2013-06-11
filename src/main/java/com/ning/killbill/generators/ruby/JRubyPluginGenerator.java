@@ -110,6 +110,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
         }
     }
 
+
     private void generateForApi(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods) throws IOException, GeneratorException {
         writeWithIndentationAndNewLine("def initialize(real_java_api)", w, 0);
         writeWithIndentationAndNewLine("@real_java_api = real_java_api", w, INDENT_LEVEL);
@@ -150,7 +151,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                     writeWithIndentationAndNewLine("if !" + f.getName() + ".nil? && " + f.getName() + ".respond_to? :to_java", w, INDENT_LEVEL);
                     firstArg = false;
                 } else {
-                    writeWithIndentationAndNewLine("if !" + f.getName() + ".nil? && " + f.getName() + ".respond_to? : to_java", w, 0);
+                    writeWithIndentationAndNewLine("if !" + f.getName() + ".nil? && " + f.getName() + ".respond_to? :to_java", w, 0);
                 }
                 writeWithIndentationAndNewLine(f.getName() + " = " + f.getName() + ".to_java", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
@@ -190,6 +191,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 for (String curException  : m.getExceptions()) {
                     writeWithIndentationAndNewLine("rescue Java::" + curException + " => e" , w, -INDENT_LEVEL);
                     try {
+                        findClassEnumOrInterface(curException, allClasses);
                         final String jrubyPoJo = getJrubyPoJo(curException);
                         writeWithIndentationAndNewLine("raise " + jrubyPoJo + ".to_ruby(e)", w, INDENT_LEVEL);
                     } catch (GeneratorException e) {
@@ -274,7 +276,9 @@ public class JRubyPluginGenerator extends BaseGenerator {
         } else if (returnValueType.equals("java.lang.Throwable")) {
             writeWithIndentationAndNewLine(member + " = " + member + ".to_s if ! " + member + ".nil?", w, 0);
         } else {
-            if ("java.lang.String".equals(returnValueType)) {
+            if ("java.lang.String".equals(returnValueType) ||
+                // TTO same thing as for to_java
+                "java.lang.Object".equals(returnValueType)) {
             } else if ("java.util.UUID".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? nil : uuid.to_s", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
@@ -306,16 +310,18 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(member + " = tmp", w, 0);
             } else {
-                writeWithIndentationAndNewLine(member + " = " + getJrubyPoJo(returnValueType) + ".to_ruby(" + member + ") if !" + member + ".nil?", w, 0);
+                // At this point if we can't find the class we throw
+                final ClassEnumOrInterface classEnumOrInterface = findClassEnumOrInterface(returnValueType, allClasses);
+                if (classEnumOrInterface.isEnum()) {
+                    writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
+                } else {
+                    writeWithIndentationAndNewLine(member + " = " + getJrubyPoJo(returnValueType) + ".to_ruby(" + member + ") if !" + member + ".nil?", w, 0);
+                }
             }
         }
     }
 
     private String getJrubyPoJo(final String pojoBaseName) throws GeneratorException {
-
-        // At this point if we can't find the class we throw
-        findClassEnumOrInterface(pojoBaseName, allClasses);
-
         String [] parts = pojoBaseName.split("\\.");
         final String jrubyObject = Joiner.on("::").join(POJO_MODULES) + "::" + parts[parts.length - 1];
         return jrubyObject;
@@ -375,9 +381,12 @@ public class JRubyPluginGenerator extends BaseGenerator {
         } else if (returnValueType.equals("java.lang.Throwable")) {
             writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
         } else {
-            if ("java.lang.String".equals(returnValueType)) {
+            if ("java.lang.String".equals(returnValueType) ||
+                // TODO fix KB API really!
+                // We assume Object is a string in that case
+                "java.lang.Object".equals(returnValueType)) {
                 // default jruby conversion should be fine
-                writeWithIndentationAndNewLine(member + " = " + member, w, 0);
+                writeWithIndentationAndNewLine(member + " = " + member + ".to_s if !" + member + ".nil?", w, 0);
             } else if ("java.util.UUID".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(member + " = java.util.UUID.fromString(" + member + ".to_s) if !" + member + ".nil?", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
@@ -413,8 +422,13 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine(member + " = tmp", w, 0);
             } else {
                 // At this point if we can't find the class we throw
-                findClassEnumOrInterface(returnValueType, allClasses);
-                writeWithIndentationAndNewLine(member + " = " + member + ".to_java if !" + member + ".nil?", w, 0);
+                final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
+                if (classEnumOrIfce.isEnum()) {
+                    // m = "Java::"
+                    writeWithIndentationAndNewLine(member + " = \"Java::" + classEnumOrIfce.getFullName() + ".#{" + member + ".to_s}\" if !" + member + ".nil?", w, 0);
+                } else {
+                    writeWithIndentationAndNewLine(member + " = " + member + ".to_java if !" + member + ".nil?", w, 0);
+                }
             }
         }
     }

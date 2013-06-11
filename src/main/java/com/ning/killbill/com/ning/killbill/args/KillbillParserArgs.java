@@ -23,8 +23,11 @@ public class KillbillParserArgs {
     @Parameter(names = {"-o", "--output"}, description ="The output directory for the objects created", converter = FileConverter.class, required = true)
     private File outputDir;
 
-    @Parameter(names = {"-p", "--packageFilter"}, variableArity = true, description ="A optional filter list of java packages")
-    private List<String> packagesFilter = new ArrayList<String>();
+    @Parameter(names = {"-p", "--packageParserFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    private List<String> packagesParserFilter = new ArrayList<String>();
+
+    @Parameter(names = {"-q", "--packageGeneratorFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    private List<String> packagesGeneratorFilter = new ArrayList<String>();
 
     @Parameter(names = {"-t", "--target"}, description ="The target generator", required = true)
     private TARGET_GENERATOR targetGenerator;
@@ -44,8 +47,12 @@ public class KillbillParserArgs {
         return outputDir;
     }
 
-    public List<String> getPackagesFilter() {
-        return packagesFilter;
+    public List<String> getPackagesParserFilter() {
+        return packagesParserFilter;
+    }
+
+    public List<String> getPackagesGeneratorFilter() {
+        return packagesGeneratorFilter;
     }
 
     public TARGET_GENERATOR getTargetGenerator() {

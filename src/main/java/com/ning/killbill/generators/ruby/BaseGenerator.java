@@ -59,13 +59,17 @@ public abstract class BaseGenerator implements Generator {
             if (args.isInputFile()) {
                 generateFromFile(args.getInputFile(), args.getOutputDir());
             } else if (args.isInputDirectory()) {
-                generateFromDirectory(args.getInputFile(), args.getOutputDir(), args.getPackagesFilter());
+                generateFromDirectory(args.getInputFile(), args.getOutputDir(), args.getPackagesParserFilter());
             } else {
                 throw new GeneratorException("Not yet supported scheme: " + args.getInput().getScheme());
             }
 
             for (ClassEnumOrInterface cur : allClasses) {
-                if (!cur.isAbstract()) {
+                if (!cur.isAbstract() && !cur.isEnum()) {
+
+                    if (!isPackageGenerator(cur.getPackageName(), args.getPackagesGeneratorFilter())) {
+                        continue;
+                    }
 
                     log.info("Generating file for object " + cur.getName());
                     generateClass(cur, allClasses, args.getOutputDir());
@@ -76,6 +80,10 @@ public abstract class BaseGenerator implements Generator {
             throw new GeneratorException("Failed to generate code: ", e);
         }
         completeGeneration(allGeneratedClasses, args.getOutputDir());
+    }
+
+    private boolean isPackageGenerator(final String curPackage, final List<String> allPackagesGenerator) {
+        return allPackagesGenerator.contains(curPackage);
     }
 
     private void generateFromDirectory(final File inputDir, final File outputDir, final List<String> packageFilters) throws IOException {
