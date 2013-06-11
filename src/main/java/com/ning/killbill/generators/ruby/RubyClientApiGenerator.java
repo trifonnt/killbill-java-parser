@@ -21,8 +21,6 @@ public class RubyClientApiGenerator extends BaseGenerator {
     private final static String DEFAULT_BASE_CLASS = "Resource";
     private final static String REQUIRE_PREFIX = "killbill_client/models/gen/";
 
-    private final static String REQUIRE_FILE_NAME = "require_gen.rb";
-
     private final String[] MODULES = {"KillBillClient", "Model"};
 
     public RubyClientApiGenerator() {
@@ -84,21 +82,17 @@ public class RubyClientApiGenerator extends BaseGenerator {
 
     @Override
     protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+        generateRubyRequireFile(classes, outputDir);
+    }
 
-        final File output = new File(outputDir, REQUIRE_FILE_NAME);
+    @Override
+    protected String getRequirePrefix() {
+        return REQUIRE_PREFIX;
+    }
 
-        writeLicense(output);
-        try {
-            final Writer w = new FileWriter(output, true);
-            writeHeader(w);
-            for (ClassEnumOrInterface cur : classes) {
-                w.write("require '" + REQUIRE_PREFIX + createFileName(cur.getName(), false) + "'\n");
-            }
-            w.flush();
-            w.close();
-        } catch (IOException e) {
-            throw new GeneratorException("Failed to create require file", e);
-        }
+    @Override
+    protected String getRequireFileName() {
+        return REQUIRE_FILE_NAME;
     }
 
     @Override
@@ -106,7 +100,8 @@ public class RubyClientApiGenerator extends BaseGenerator {
         return LICENSE_NAME;
     }
 
-    private static String createFileName(final String objName, boolean addRubyExtension) {
+    @Override
+    protected String createFileName(final String objName, boolean addRubyExtension) {
         final String extension = addRubyExtension ? ".rb" : "";
         return camelToUnderscore(createClassName(objName) + extension);
     }

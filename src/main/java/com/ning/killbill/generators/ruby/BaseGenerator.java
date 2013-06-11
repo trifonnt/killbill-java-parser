@@ -2,6 +2,7 @@ package com.ning.killbill.generators.ruby;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,6 +35,8 @@ import com.google.common.collect.Collections2;
 import com.google.common.io.Resources;
 
 public abstract class BaseGenerator implements Generator {
+
+    protected final static String REQUIRE_FILE_NAME = "require_gen.rb";
 
     protected Logger log = LoggerFactory.getLogger(BaseGenerator.class);
 
@@ -233,6 +236,28 @@ public abstract class BaseGenerator implements Generator {
 
     protected abstract void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
 
+    protected abstract String createFileName(final String name, final boolean b);
+
+    protected abstract String getRequirePrefix();
+
+    protected abstract String getRequireFileName();
+
     protected abstract String getLicense();
 
+    protected void generateRubyRequireFile(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+        final File output = new File(outputDir, getRequireFileName());
+
+        writeLicense(output);
+        try {
+            final Writer w = new FileWriter(output, true);
+            writeHeader(w);
+            for (ClassEnumOrInterface cur : classes) {
+                w.write("require '" + getRequirePrefix() + "/" + createFileName(cur.getName(), false) + "'\n");
+            }
+            w.flush();
+            w.close();
+        } catch (IOException e) {
+            throw new GeneratorException("Failed to create require file", e);
+        }
+    }
 }

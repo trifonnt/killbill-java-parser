@@ -23,6 +23,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
     private final static int INDENT_LEVEL = 2;
+    private static final String REQUIRE_PREFIX = "killbill/gen";
 
     private final String[] POJO_MODULES = {"Killbill", "Plugin", "Model"};
     private final String[] API_MODULES = {"Killbill", "Plugin", "Api"};
@@ -91,14 +92,14 @@ public class JRubyPluginGenerator extends BaseGenerator {
 
     private void generateEndModules(final Writer w, boolean api) throws IOException {
 
-        final String [] modules = api ? API_MODULES : POJO_MODULES;
+        final String[] modules = api ? API_MODULES : POJO_MODULES;
         for (int i = 0; i < modules.length; i++) {
             writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         }
     }
 
     private void generateStartModules(final Writer w, boolean api) throws IOException {
-        final String [] modules = api ? API_MODULES : POJO_MODULES;
+        final String[] modules = api ? API_MODULES : POJO_MODULES;
         boolean first = true;
         for (int i = 0; i < modules.length; i++) {
             if (first) {
@@ -182,25 +183,25 @@ public class JRubyPluginGenerator extends BaseGenerator {
             writeAppend(")", w);
             writeNewLine(w);
             // conversion
-            if (! isVoidReturn) {
+            if (!isVoidReturn) {
                 writeConversionToRuby("res", m.getReturnValueType().getBaseType(), m.getReturnValueType().getGenericType(), allClasses, w, 0, false);
                 writeWithIndentationAndNewLine("return res", w, 0);
             }
 
             if (gotExceptions) {
-                for (String curException  : m.getExceptions()) {
-                    writeWithIndentationAndNewLine("rescue Java::" + curException + " => e" , w, -INDENT_LEVEL);
+                for (String curException : m.getExceptions()) {
+                    writeWithIndentationAndNewLine("rescue Java::" + curException + " => e", w, -INDENT_LEVEL);
                     try {
                         findClassEnumOrInterface(curException, allClasses);
                         final String jrubyPoJo = getJrubyPoJo(curException);
                         writeWithIndentationAndNewLine("raise " + jrubyPoJo + ".to_ruby(e)", w, INDENT_LEVEL);
                     } catch (GeneratorException e) {
-                        writeWithIndentationAndNewLine("raise ApiException.new(\"TODO\")", w, INDENT_LEVEL);
+                        writeWithIndentationAndNewLine("raise ApiException.new(\"" + curException + ": #{e.msg if !e.msg.nil?}\")", w, INDENT_LEVEL);
                     }
                 }
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             }
-            writeWithIndentationAndNewLine("end" , w, -INDENT_LEVEL);
+            writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         }
     }
 
@@ -283,17 +284,20 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? nil : uuid.to_s", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(member + " = " + member + ".nil? ? 0 : " + member + ".multiply(java.math.BigDecimal.valueOf(100)).to_s.to_i", w, 0);
-            } else if ("java.util.Date".equals(returnValueType)) {
-                // TODO STEPH
-            } else if ("org.joda.time.DateTime".equals(returnValueType)) {
+            } else if ("org.joda.time.DateTime".equals(returnValueType) ||
+                       "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
-                writeWithIndentationAndNewLine("fmt = Java::org.joda.time.format.ISODateTimeFormat.date_time", w, INDENT_LEVEL);
+                if ("java.util.Date".equals(returnValueType)) {
+                    // First convert to DateTime
+                    writeWithIndentationAndNewLine(member + " = " + "Java::org.joda.time.DateTime.new(" + member + ")", w, INDENT_LEVEL);
+                }
+                writeWithIndentationAndNewLine("fmt = Java::org.joda.time.format.ISODateTimeFormat.date_time", w, ("java.util.Date".equals(returnValueType) ? 0 : INDENT_LEVEL));
                 writeWithIndentationAndNewLine("str = fmt.print(" + member + ")", w, 0);
                 writeWithIndentationAndNewLine(member + " = " + "DateTime.iso8601(str)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.LocalDate".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
-                writeWithIndentationAndNewLine(member + " = "  + member + ".to_s", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine(member + " = " + member + ".to_s", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTimeZone".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
@@ -322,7 +326,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
     }
 
     private String getJrubyPoJo(final String pojoBaseName) throws GeneratorException {
-        String [] parts = pojoBaseName.split("\\.");
+        String[] parts = pojoBaseName.split("\\.");
         final String jrubyObject = Joiner.on("::").join(POJO_MODULES) + "::" + parts[parts.length - 1];
         return jrubyObject;
     }
@@ -395,16 +399,18 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("else", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
-            } else if ("java.util.Date".equals(returnValueType)) {
-                // TODO STEPH
-            } else if ("org.joda.time.DateTime".equals(returnValueType)) {
+            } else if ("org.joda.time.DateTime".equals(returnValueType) ||
+                       "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
                 writeWithIndentationAndNewLine(member + " =  (" + member + ".kind_of? Time) ? DateTime.parse(" + member + ".to_s) : " + member, w, INDENT_LEVEL);
-                writeWithIndentationAndNewLine(member + " = org.joda.time.DateTime.new(" + member + ".to_s, org.joda.time.DateTimeZone::UTC)", w, 0);
+                writeWithIndentationAndNewLine(member + " = Java::org.joda.time.DateTime.new(" + member + ".to_s, Java::org.joda.time.DateTimeZone::UTC)", w, 0);
+                if ("java.util.Date".equals(returnValueType)) {
+                    writeWithIndentationAndNewLine(member + " = " + member + ".to_date", w, 0);
+                }
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.LocalDate".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
-                writeWithIndentationAndNewLine(member + " = org.joda.time.LocalDate.parse(" + member + ".to_s)", w, 0);
+                writeWithIndentationAndNewLine(member + " = Java::org.joda.time.LocalDate.parse(" + member + ".to_s)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTimeZone".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + member + ".nil?", w, 0);
@@ -512,14 +518,25 @@ public class JRubyPluginGenerator extends BaseGenerator {
         throw new GeneratorException("Unexpected getter method :" + input);
     }
 
-    private String createFileName(final String name, final boolean b) {
+    @Override
+    protected String createFileName(final String name, final boolean b) {
         final String extension = ".rb";
         return camelToUnderscore(name + extension);
     }
 
+    @Override
+    protected String getRequirePrefix() {
+        return REQUIRE_PREFIX;
+    }
+
+    @Override
+    protected String getRequireFileName() {
+        return REQUIRE_FILE_NAME;
+    }
 
     @Override
     protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+        generateRubyRequireFile(classes, outputDir);
     }
 
     @Override
