@@ -431,7 +431,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrIfce.isEnum()) {
                     // m = "Java::"
-                    writeWithIndentationAndNewLine(member + " = \"Java::" + classEnumOrIfce.getFullName() + ".#{" + member + ".to_s}\" if !" + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(member + " = \"Java::" + classEnumOrIfce.getFullName() + "::#{" + member + ".to_s}\" if !" + member + ".nil?", w, 0);
                 } else {
                     writeWithIndentationAndNewLine(member + " = " + member + ".to_java if !" + member + ".nil?", w, 0);
                 }
