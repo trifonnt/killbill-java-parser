@@ -70,7 +70,8 @@ public abstract class BaseGenerator implements Generator {
             for (ClassEnumOrInterface cur : allClasses) {
                 if (!cur.isAbstract() && !cur.isEnum()) {
 
-                    if (!isPackageGenerator(cur.getPackageName(), args.getPackagesGeneratorFilter())) {
+                    if (!isPackageGenerator(cur.getPackageName(), args.getPackagesGeneratorFilter()) ||
+                        isClassExcluded(cur.getName(), args.getClassGeneratorExcludes())) {
                         continue;
                     }
 
@@ -87,6 +88,10 @@ public abstract class BaseGenerator implements Generator {
 
     private boolean isPackageGenerator(final String curPackage, final List<String> allPackagesGenerator) {
         return allPackagesGenerator.contains(curPackage);
+    }
+
+    private boolean isClassExcluded(final String className, final List<String> excludeClasses) {
+        return excludeClasses.contains(className);
     }
 
     private void generateFromDirectory(final File inputDir, final File outputDir, final List<String> packageFilters) throws IOException {

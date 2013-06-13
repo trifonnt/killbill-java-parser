@@ -29,6 +29,9 @@ public class KillbillParserArgs {
     @Parameter(names = {"-q", "--packageGeneratorFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
     private List<String> packagesGeneratorFilter = new ArrayList<String>();
 
+    @Parameter(names = {"-x", "--classGeneratorFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    private List<String> classGeneratorExcludes = new ArrayList<String>();
+
     @Parameter(names = {"-t", "--target"}, description ="The target generator", required = true)
     private TARGET_GENERATOR targetGenerator;
 
@@ -59,6 +62,9 @@ public class KillbillParserArgs {
         return targetGenerator;
     }
 
+    public List<String> getClassGeneratorExcludes() {
+        return classGeneratorExcludes;
+    }
 
     public boolean isInputJar() {
         return "jar".equals(input.getScheme());
