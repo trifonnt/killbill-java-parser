@@ -248,6 +248,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeConversionToRuby(m, allClasses, w, 0);
             }
         }
+        writeWithIndentationAndNewLine("self", w, 0);
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         writeNewLine(w);
     }
@@ -317,7 +318,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                        "java.util.Set".equals(returnValueType) ||
                        "java.util.Iterator".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = []", w, 0);
-                writeWithIndentationAndNewLine(memberPrefix + member + ".each do |m|", w, 0);
+                writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                 writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, fromJobj);
                 writeWithIndentationAndNewLine("tmp << m", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
@@ -326,7 +327,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 // At this point if we can't find the class we throw
                 final ClassEnumOrInterface classEnumOrInterface = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrInterface.isEnum()) {
-                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless " + memberPrefix + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s.to_sym unless " + memberPrefix + member + ".nil?", w, 0);
                 } else {
                     writeWithIndentationAndNewLine(memberPrefix + member + " = " + getJrubyPoJo(returnValueType) + ".new.to_ruby(" + memberPrefix + member + ") unless " + memberPrefix + member + ".nil?", w, 0);
                 }
@@ -355,6 +356,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeConversionToJava(m, allClasses, w, 0);
             }
         }
+        writeWithIndentationAndNewLine("self", w, 0);
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         writeNewLine(w);
     }
@@ -424,14 +426,14 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTimeZone".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + memberPrefix + member + ".nil?", w, 0);
-                writeWithIndentationAndNewLine(memberPrefix + member + " = Java::org.joda.time.DateTimeZone.forID(" + memberPrefix + member + ".respond_to?(:identifier) ? " + memberPrefix + member + ".identifier : " + memberPrefix + member + ".to_s)", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = Java::org.joda.time.DateTimeZone.forID((" + memberPrefix + member + ".respond_to?(:identifier) ? " + memberPrefix + member + ".identifier : " + memberPrefix + member + ".to_s))", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("java.util.List".equals(returnValueType) ||
                        "java.util.Collection".equals(returnValueType) ||
                        "java.util.Set".equals(returnValueType) ||
                        "java.util.Iterator".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = java.util.ArrayList.new", w, 0);
-                writeWithIndentationAndNewLine(memberPrefix + member + ".each do |m|", w, 0);
+                writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                 writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, memberPrefix);
                 writeWithIndentationAndNewLine("tmp.add(m)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
