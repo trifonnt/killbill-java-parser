@@ -319,7 +319,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                        "java.util.Iterator".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = []", w, 0);
                 writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
-                writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, fromJobj);
+                writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
                 writeWithIndentationAndNewLine("tmp << m", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
@@ -356,7 +356,30 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeConversionToJava(m, allClasses, w, 0);
             }
         }
-        writeWithIndentationAndNewLine("self", w, 0);
+        //
+        // If this is a class, that sucks because we can't rely on the jruby layer to map the Jruby object to a valid java object based on the include mechanism
+        // so we new to explicitely call the CTOR of that class.
+        // TODO There is a hack here we assumes that CTOR takes all the fields as arguments is the correct order. We should realy fix our API to not have those cases
+        // or be smarter in the conversion process and loo at the CTOR arguments into more details
+        if (obj.isClass()) {
+            writeWithIndentation("Java::" + obj.getPackageName() + "." + obj.getName() + ".new(", w, 0);
+            first = true;
+            for (final Method m : flattenedMethods) {
+                if (!m.isGetter()) {
+                    continue;
+                }
+                if (!first) {
+                    writeAppend(", ", w);
+                }
+                final String member = camelToUnderscore(convertGetterMethodToFieldName(m.getName()));
+                writeAppend("@" + member, w);
+                first = false;
+            }
+            writeAppend(")", w);
+            writeNewLine(w);
+        } else {
+            writeWithIndentationAndNewLine("self", w, 0);
+        }
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         writeNewLine(w);
     }
@@ -434,7 +457,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                        "java.util.Iterator".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = java.util.ArrayList.new", w, 0);
                 writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
-                writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, memberPrefix);
+                writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, "");
                 writeWithIndentationAndNewLine("tmp.add(m)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
