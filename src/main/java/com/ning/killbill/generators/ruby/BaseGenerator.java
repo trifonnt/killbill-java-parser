@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,19 +59,23 @@ public abstract class BaseGenerator implements Generator {
         final List<ClassEnumOrInterface> allGeneratedClasses = new ArrayList<ClassEnumOrInterface>();
 
         startGeneration(allClasses, args.getOutputDir());
+
+        final List<URI> input = args.getInput();
         try {
-            if (args.isInputFile()) {
-                generateFromFile(args.getInputFile(), args.getOutputDir());
-            } else if (args.isInputDirectory()) {
-                generateFromDirectory(args.getInputFile(), args.getOutputDir(), args.getPackagesParserFilter());
-            } else {
-                throw new GeneratorException("Not yet supported scheme: " + args.getInput().getScheme());
+            for (final URI cur : input) {
+                if (args.isInputFile(cur)) {
+                    generateFromFile(args.getInputFile(cur), args.getOutputDir());
+                } else if (args.isInputDirectory(cur)) {
+                    generateFromDirectory(args.getInputFile(cur), args.getOutputDir(), args.getPackagesParserFilter());
+                } else {
+                    throw new GeneratorException("Not yet supported scheme: " + cur.getScheme());
+                }
             }
 
             for (ClassEnumOrInterface cur : allClasses) {
                 if (!cur.isAbstract() && !cur.isEnum()) {
 
-                    if (!isPackageGenerator(cur.getPackageName(), args.getPackagesGeneratorFilter()) ||
+                    if (!isPackageIncluded(cur.getPackageName(), args.getPackagesGeneratorFilter()) ||
                         isClassExcluded(cur.getName(), args.getClassGeneratorExcludes())) {
                         continue;
                     }
@@ -86,8 +91,9 @@ public abstract class BaseGenerator implements Generator {
         completeGeneration(allGeneratedClasses, args.getOutputDir());
     }
 
-    private boolean isPackageGenerator(final String curPackage, final List<String> allPackagesGenerator) {
-        return allPackagesGenerator.contains(curPackage);
+    private boolean isPackageIncluded(final String curPackage, final List<String> allPackagesGenerator) {
+        boolean res = (allPackagesGenerator.size() == 0) || (allPackagesGenerator.contains(curPackage));
+        return res;
     }
 
     private boolean isClassExcluded(final String className, final List<String> excludeClasses) {

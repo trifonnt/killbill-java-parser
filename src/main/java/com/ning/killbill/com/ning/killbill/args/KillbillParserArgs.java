@@ -5,10 +5,15 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 
 public class KillbillParserArgs {
 
@@ -17,8 +22,8 @@ public class KillbillParserArgs {
     @Parameter(names= {"-d", "--debug"}, description = "Turn on debug traces")
     private boolean debug = false;
 
-    @Parameter(names = {"-i", "--input"}, description = "The input file/jar/directory for the java sources to prase", converter = URIConverter.class, required = true)
-    private URI input;
+    @Parameter(names = {"-i", "--input"}, description = "The input file/jar/directory for the java sources to prase", variableArity = true, required = true)
+    private List<String> input = new ArrayList<String>();
 
     @Parameter(names = {"-o", "--output"}, description ="The output directory for the objects created", converter = FileConverter.class, required = true)
     private File outputDir;
@@ -42,8 +47,16 @@ public class KillbillParserArgs {
         PHP_CLIENT_API
     }
 
-    public URI getInput() {
-        return input;
+    public List<URI> getInput() {
+        return ImmutableList.<URI>copyOf(Collections2.transform(input, new Function<String, URI>() {
+            final URIConverter uriConverter = new URIConverter("-i");
+
+            @Nullable
+            @Override
+            public URI apply(@Nullable final String input) {
+                return uriConverter.convert(input);
+            }
+        }));
     }
 
     public File getOutputDir() {
@@ -66,27 +79,27 @@ public class KillbillParserArgs {
         return classGeneratorExcludes;
     }
 
-    public boolean isInputJar() {
+    public boolean isInputJar(final URI input) {
         return "jar".equals(input.getScheme());
     }
 
-    public boolean isInputFile() {
+    public static boolean isInputFile(final URI input) {
         if (! "file".equals(input.getScheme())) {
             return false;
         }
-        File f = getInputFile();
+        File f = getInputFile(input);
         return f.isFile();
     }
 
-    public boolean isInputDirectory() {
+    public static boolean isInputDirectory(final URI input) {
         if (! "file".equals(input.getScheme())) {
             return false;
         }
-        File f = getInputFile();
+        File f = getInputFile(input);
         return f.isDirectory();
     }
 
-    public File getInputFile() {
+    public static File getInputFile(final URI input) {
         File f = new File(input.getPath());
         if (! f.exists()) {
             throw new IllegalArgumentException(input + " is not  a valid file/directory");
