@@ -27,6 +27,7 @@ import com.ning.killbill.JavaLexer;
 import com.ning.killbill.JavaParser;
 import com.ning.killbill.KillbillListener;
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
+import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
 import com.ning.killbill.generators.Generator;
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.ClassEnumOrInterface;
@@ -81,14 +82,14 @@ public abstract class BaseGenerator implements Generator {
                     }
 
                     log.info("Generating file for object " + cur.getName());
-                    generateClass(cur, allClasses, args.getOutputDir());
+                    generateClass(cur, allClasses, args.getOutputDir(), args.getMode());
                     allGeneratedClasses.add(cur);
                 }
             }
         } catch (IOException e) {
             throw new GeneratorException("Failed to generate code: ", e);
         }
-        completeGeneration(allGeneratedClasses, args.getOutputDir());
+        completeGeneration(allGeneratedClasses, args.getOutputDir(), args.getMode());
     }
 
     private boolean isPackageIncluded(final String curPackage, final List<String> allPackagesGenerator) {
@@ -243,19 +244,19 @@ public abstract class BaseGenerator implements Generator {
 
     protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
 
-    protected abstract void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir) throws GeneratorException;
+    protected abstract void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException;
 
-    protected abstract void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
+    protected abstract void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException;
 
     protected abstract String createFileName(final String name, final boolean b);
 
-    protected abstract String getRequirePrefix();
+    protected abstract String getRequirePrefix(final GENERATOR_MODE mode) throws GeneratorException;
 
     protected abstract String getRequireFileName();
 
     protected abstract String getLicense();
 
-    protected void generateRubyRequireFile(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+    protected void generateRubyRequireFile(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
         final File output = new File(outputDir, getRequireFileName());
 
         writeLicense(output);
@@ -263,7 +264,7 @@ public abstract class BaseGenerator implements Generator {
             final Writer w = new FileWriter(output, true);
             writeHeader(w);
             for (ClassEnumOrInterface cur : classes) {
-                w.write("require '" + getRequirePrefix() + "/" + createFileName(cur.getName(), false) + "'\n");
+                w.write("require '" + getRequirePrefix(mode) + "/" + createFileName(cur.getName(), false) + "'\n");
             }
             w.flush();
             w.close();

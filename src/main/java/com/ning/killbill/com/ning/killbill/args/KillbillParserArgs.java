@@ -28,23 +28,34 @@ public class KillbillParserArgs {
     @Parameter(names = {"-o", "--output"}, description ="The output directory for the objects created", converter = FileConverter.class, required = true)
     private File outputDir;
 
-    @Parameter(names = {"-p", "--packageParserFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    @Parameter(names = {"-p", "--packageParserIncludeFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
     private List<String> packagesParserFilter = new ArrayList<String>();
 
-    @Parameter(names = {"-q", "--packageGeneratorFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    @Parameter(names = {"-q", "--packageGeneratorIncludeFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
     private List<String> packagesGeneratorFilter = new ArrayList<String>();
 
-    @Parameter(names = {"-x", "--classGeneratorFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
+    /* That option should probably go; needed at this point because there are a few classes that the generator can't produce because our API needs some work */
+    @Parameter(names = {"-x", "--classGeneratorExcludeFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
     private List<String> classGeneratorExcludes = new ArrayList<String>();
+
 
     @Parameter(names = {"-t", "--target"}, description ="The target generator", required = true)
     private TARGET_GENERATOR targetGenerator;
+
+    @Parameter(names = {"-m", "--mode"}, description ="The generator mode")
+    private GENERATOR_MODE mode = GENERATOR_MODE.NON_APPLICABLE;
 
 
     public enum TARGET_GENERATOR {
         JRUBY_PLUGIN,
         RUBY_CLIENT_API,
         PHP_CLIENT_API
+    }
+
+    public enum GENERATOR_MODE {
+        NON_APPLICABLE,
+        JRUBY_API,
+        JRUBY_PLUGIN_API
     }
 
     public List<URI> getInput() {
@@ -73,6 +84,10 @@ public class KillbillParserArgs {
 
     public TARGET_GENERATOR getTargetGenerator() {
         return targetGenerator;
+    }
+
+    public GENERATOR_MODE getMode() {
+        return mode;
     }
 
     public List<String> getClassGeneratorExcludes() {

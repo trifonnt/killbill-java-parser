@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
+import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Field;
@@ -23,7 +24,8 @@ public class JRubyPluginGenerator extends BaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
     private final static int INDENT_LEVEL = 2;
-    private static final String REQUIRE_PREFIX = "killbill/gen";
+    private static final String REQUIRE_API_PREFIX = "killbill/gen/api";
+    private static final String REQUIRE_PLUGIN_API_PREFIX = "killbill/gen/plugin-api";
 
     private final String[] POJO_MODULES = {"Killbill", "Plugin", "Model"};
     private final String[] API_MODULES = {"Killbill", "Plugin", "Api"};
@@ -39,7 +41,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
 
 
     @Override
-    protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir) throws GeneratorException {
+    protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
 
         resetIndentation();
 
@@ -71,18 +73,21 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine("java_package '" + obj.getPackageName() + "'", w, curIndent);
                 curIndent = 0;
             }
-            writeWithIndentationAndNewLine("class " + obj.getName(), w, curIndent);
+
+            if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API && isApi) {
+                writeWithIndentationAndNewLine("class " + obj.getName() + " < JPlugin", w, curIndent);
+            } else {
+                writeWithIndentationAndNewLine("class " + obj.getName(), w, curIndent);
+            }
             writeNewLine(w);
 
-            curIndent = INDENT_LEVEL;
             if (isInterface) {
-                writeWithIndentationAndNewLine("include " + obj.getPackageName() + "." + obj.getName(), w, curIndent);
-                curIndent = 0;
+                writeWithIndentationAndNewLine("include " + obj.getPackageName() + "." + obj.getName(), w, INDENT_LEVEL);
             }
             writeNewLine(w);
 
             if (isApi) {
-                generateForApi(obj, w, flattenedMethods);
+                generateForKillbillApi(obj, w, flattenedMethods, mode);
             } else {
                 generateForPojo(obj, w, flattenedMethods);
             }
@@ -122,98 +127,168 @@ public class JRubyPluginGenerator extends BaseGenerator {
     }
 
 
-    private void generateForApi(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods) throws IOException, GeneratorException {
+    private void generateForKillbillApi(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods, GENERATOR_MODE mode) throws IOException, GeneratorException {
+
+
+        if (mode == GENERATOR_MODE.JRUBY_API) {
+            generateApiInitializeMethod(w);
+        } else if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API) {
+            generatePluginApiInitializeMethod(w);
+        }
+
+        for (final Method m : flattenedMethods) {
+            final String methodName = generateMethodSignature(w, m);
+            generateMethodArgumentConversion(w, mode, m);
+            if (mode == GENERATOR_MODE.JRUBY_API) {
+                generateApiMethodReturnConversion(w, m, methodName);
+            } else if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API) {
+                generatePluginApiMethodReturnConversion(w, m, methodName);
+            }
+            writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+        }
+    }
+
+    private void generatePluginApiInitializeMethod(final Writer w) throws IOException {
+        writeWithIndentationAndNewLine("def initialize(real_class_name, services = {})", w, 0);
+        writeWithIndentationAndNewLine("super(real_class_name, services)", w, INDENT_LEVEL);
+        writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+        writeNewLine(w);
+    }
+
+    private void generateApiInitializeMethod(final Writer w) throws IOException {
         writeWithIndentationAndNewLine("def initialize(real_java_api)", w, 0);
         writeWithIndentationAndNewLine("@real_java_api = real_java_api", w, INDENT_LEVEL);
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         writeNewLine(w);
+    }
 
-        for (final Method m : flattenedMethods) {
-            final String returnValue = m.getReturnValueType().getBaseType();
-            writeNewLine(w);
-            writeWithIndentation("java_signature 'Java::" + returnValue + " " + m.getName() + "(", w, 0);
-            boolean first = true;
-            for (Field f : m.getOrderedArguments()) {
-                if (!first) {
-                    writeAppend(", ", w);
+    private void generatePluginApiMethodReturnConversion(final Writer w, final Method m, final String methodName) throws IOException, GeneratorException {
+
+
+        final boolean isVoidReturn = "void".equals(m.getReturnValueType().getBaseType());
+        writeWithIndentationAndNewLine("begin", w, 0);
+        if (isVoidReturn) {
+            writeWithIndentation("@delegate_plugin." + methodName + "(", w, INDENT_LEVEL);
+        } else {
+            writeWithIndentation("res = @delegate_plugin." + methodName + "(", w, INDENT_LEVEL);
+        }
+
+        boolean first = true;
+        for (Field f : m.getOrderedArguments()) {
+            if (!first) {
+                writeAppend(", ", w);
+            }
+            writeAppend(f.getName(), w);
+            first = false;
+        }
+        writeAppend(")", w);
+        writeNewLine(w);
+        // conversion
+        if (!isVoidReturn) {
+            writeConversionToJava("res", m.getReturnValueType().getBaseType(), m.getReturnValueType().getGenericType(), allClasses, w, 0, "");
+            writeWithIndentationAndNewLine("return res", w, 0);
+        }
+
+        writeWithIndentationAndNewLine("rescue Exception => e", w, -INDENT_LEVEL);
+        writeWithIndentationAndNewLine("message = \"Failure in " + methodName + ": #{e}\"", w, + INDENT_LEVEL);
+        writeWithIndentationAndNewLine("unless e.backtrace.nil?", w, + 0);
+        writeWithIndentationAndNewLine("message = \"#{message}\\n#{e.backtrace.join(\"\\n\")}\"", w, + INDENT_LEVEL);
+        writeWithIndentationAndNewLine("end", w, + -INDENT_LEVEL);
+        writeWithIndentationAndNewLine("logger.warn message" , w, + 0);
+        writeWithIndentationAndNewLine("raise Java::com.ning.billing.payment.plugin.api.PaymentPluginApiException.new(\"" + methodName + " failure\", e.message)", w, 0);
+        writeWithIndentationAndNewLine("ensure", w, -INDENT_LEVEL);
+        writeWithIndentationAndNewLine("@delegate_plugin.after_request", w, INDENT_LEVEL);
+        writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+    }
+
+    private void generateApiMethodReturnConversion(final Writer w, final Method m, final String methodName) throws IOException, GeneratorException {
+        final boolean isVoidReturn = "void".equals(m.getReturnValueType().getBaseType());
+        final boolean gotExceptions = (m.getExceptions().size() > 0);
+        if (gotExceptions) {
+            writeWithIndentationAndNewLine("begin", w, 0);
+        }
+        if (isVoidReturn) {
+            writeWithIndentation("@real_java_api." + methodName + "(", w, gotExceptions ? INDENT_LEVEL : 0);
+        } else {
+            writeWithIndentation("res = @real_java_api." + methodName + "(", w, gotExceptions ? INDENT_LEVEL : 0);
+        }
+
+        boolean first = true;
+        for (Field f : m.getOrderedArguments()) {
+            if (!first) {
+                writeAppend(", ", w);
+            }
+            writeAppend(f.getName(), w);
+            first = false;
+        }
+        writeAppend(")", w);
+        writeNewLine(w);
+        // conversion
+        if (!isVoidReturn) {
+            writeConversionToRuby("res", m.getReturnValueType().getBaseType(), m.getReturnValueType().getGenericType(), allClasses, w, 0, false);
+            writeWithIndentationAndNewLine("return res", w, 0);
+        }
+
+        if (gotExceptions) {
+            for (String curException : m.getExceptions()) {
+                writeWithIndentationAndNewLine("rescue Java::" + curException + " => e", w, -INDENT_LEVEL);
+                try {
+                    findClassEnumOrInterface(curException, allClasses);
+                    final String jrubyPoJo = getJrubyPoJo(curException);
+                    writeWithIndentationAndNewLine("raise " + jrubyPoJo + ".new.to_ruby(e)", w, INDENT_LEVEL);
+                } catch (GeneratorException e) {
+                    writeWithIndentationAndNewLine("raise ApiException.new(\"" + curException + ": #{e.msg unless e.msg.nil?}\")", w, INDENT_LEVEL);
                 }
-                writeAppend("Java::" + f.getType().getBaseType(), w);
-                first = false;
-            }
-            writeAppend(")'", w);
-            writeNewLine(w);
-
-            final String method_name = camelToUnderscore(m.getName());
-            writeWithIndentation("def " + method_name + "(", w, 0);
-            first = true;
-            for (Field f : m.getOrderedArguments()) {
-                if (!first) {
-                    writeAppend(", ", w);
-                }
-                writeAppend(f.getName(), w);
-                first = false;
-            }
-            writeAppend(")", w);
-            writeNewLine(w);
-
-            boolean firstArg = true;
-            for (Field f : m.getOrderedArguments()) {
-                if (firstArg) {
-
-                    writeConversionToJava(f.getName(), f.getType().getBaseType(), f.getType().getGenericType(), allClasses, w, INDENT_LEVEL, "");
-                    firstArg = false;
-                } else {
-                    writeConversionToJava(f.getName(), f.getType().getBaseType(), f.getType().getGenericType(), allClasses, w, 0, "");
-                }
-                //writeWithIndentationAndNewLine(f.getName() + " = " + f.getName() + ".to_java", w, INDENT_LEVEL);
-                //writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
-                //writeNewLine(w);
-
-            }
-
-            final boolean isVoidReturn = "void".equals(m.getReturnValueType().getBaseType());
-            final boolean gotExceptions = (m.getExceptions().size() > 0);
-            if (gotExceptions) {
-                writeWithIndentationAndNewLine("begin", w, 0);
-            }
-            if (isVoidReturn) {
-                writeWithIndentation("@real_java_api." + method_name + "(", w, gotExceptions ? INDENT_LEVEL : 0);
-            } else {
-                writeWithIndentation("res = @real_java_api." + method_name + "(", w, gotExceptions ? INDENT_LEVEL : 0);
-            }
-
-
-            first = true;
-            for (Field f : m.getOrderedArguments()) {
-                if (!first) {
-                    writeAppend(", ", w);
-                }
-                writeAppend(f.getName(), w);
-                first = false;
-            }
-            writeAppend(")", w);
-            writeNewLine(w);
-            // conversion
-            if (!isVoidReturn) {
-                writeConversionToRuby("res", m.getReturnValueType().getBaseType(), m.getReturnValueType().getGenericType(), allClasses, w, 0, false);
-                writeWithIndentationAndNewLine("return res", w, 0);
-            }
-
-            if (gotExceptions) {
-                for (String curException : m.getExceptions()) {
-                    writeWithIndentationAndNewLine("rescue Java::" + curException + " => e", w, -INDENT_LEVEL);
-                    try {
-                        findClassEnumOrInterface(curException, allClasses);
-                        final String jrubyPoJo = getJrubyPoJo(curException);
-                        writeWithIndentationAndNewLine("raise " + jrubyPoJo + ".new.to_ruby(e)", w, INDENT_LEVEL);
-                    } catch (GeneratorException e) {
-                        writeWithIndentationAndNewLine("raise ApiException.new(\"" + curException + ": #{e.msg unless e.msg.nil?}\")", w, INDENT_LEVEL);
-                    }
-                }
-                writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             }
             writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
         }
+    }
+
+    private void generateMethodArgumentConversion(final Writer w, final GENERATOR_MODE mode, final Method m) throws GeneratorException, IOException {
+
+        boolean firstArg = true;
+        for (Field f : m.getOrderedArguments()) {
+            writeNewLine(w);
+            int curIndentLevel = firstArg ? INDENT_LEVEL : 0;
+            if (mode == GENERATOR_MODE.JRUBY_API) {
+                writeConversionToJava(f.getName(), f.getType().getBaseType(), f.getType().getGenericType(), allClasses, w, curIndentLevel, "");
+            } else if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API) {
+                writeConversionToRuby(f.getName(), f.getType().getBaseType(), f.getType().getGenericType(), allClasses, w, curIndentLevel, false);
+            }
+            firstArg = false;
+        }
+    }
+
+    private String generateMethodSignature(final Writer w, final Method m) throws IOException {
+
+        final String returnValue = m.getReturnValueType().getBaseType();
+        writeNewLine(w);
+        writeWithIndentation("java_signature 'Java::" + returnValue + " " + m.getName() + "(", w, 0);
+
+        boolean first = true;
+        for (Field f : m.getOrderedArguments()) {
+            if (!first) {
+                writeAppend(", ", w);
+            }
+            writeAppend("Java::" + f.getType().getBaseType(), w);
+            first = false;
+        }
+        writeAppend(")'", w);
+        writeNewLine(w);
+
+        final String methodName = camelToUnderscore(m.getName());
+        writeWithIndentation("def " + methodName + "(", w, 0);
+        first = true;
+        for (Field f : m.getOrderedArguments()) {
+            if (!first) {
+                writeAppend(", ", w);
+            }
+            writeAppend(f.getName(), w);
+            first = false;
+        }
+        writeAppend(")", w);
+        writeNewLine(w);
+        return methodName;
     }
 
     private boolean isApiFile(final String fileName) {
@@ -424,9 +499,9 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 // We assume Object is a string in that case
                 "java.lang.Object".equals(returnValueType)) {
                 // default jruby conversion should be fine
-                writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless "  + memberPrefix + member + ".nil?", w, 0);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless " + memberPrefix + member + ".nil?", w, 0);
             } else if ("java.util.UUID".equals(returnValueType)) {
-                writeWithIndentationAndNewLine(memberPrefix + member + " = java.util.UUID.fromString(" + memberPrefix + member + ".to_s) unless "  + memberPrefix + member + ".nil?", w, 0);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = java.util.UUID.fromString(" + memberPrefix + member + ".to_s) unless " + memberPrefix + member + ".nil?", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if " + memberPrefix + member + ".nil?", w, 0);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = java.math.BigDecimal::ZERO", w, INDENT_LEVEL);
@@ -465,9 +540,9 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 // At this point if we can't find the class we throw
                 final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrIfce.isEnum()) {
-                    writeWithIndentationAndNewLine(memberPrefix + member + " = Java::" + classEnumOrIfce.getFullName() + ".value_of(\"#{" + memberPrefix + member + ".to_s}\") unless "  + memberPrefix + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(memberPrefix + member + " = Java::" + classEnumOrIfce.getFullName() + ".value_of(\"#{" + memberPrefix + member + ".to_s}\") unless " + memberPrefix + member + ".nil?", w, 0);
                 } else {
-                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_java unless "  + memberPrefix + member + ".nil?", w, 0);
+                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_java unless " + memberPrefix + member + ".nil?", w, 0);
                 }
             }
         }
@@ -524,8 +599,14 @@ public class JRubyPluginGenerator extends BaseGenerator {
     }
 
     @Override
-    protected String getRequirePrefix() {
-        return REQUIRE_PREFIX;
+    protected String getRequirePrefix(final GENERATOR_MODE mode) throws GeneratorException {
+        if (mode == GENERATOR_MODE.JRUBY_API) {
+            return REQUIRE_API_PREFIX;
+        } else if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API) {
+            return REQUIRE_PLUGIN_API_PREFIX;
+        } else {
+            throw new GeneratorException("Unexpected mode  :" + mode);
+        }
     }
 
     @Override
@@ -534,8 +615,8 @@ public class JRubyPluginGenerator extends BaseGenerator {
     }
 
     @Override
-    protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
-        generateRubyRequireFile(classes, outputDir);
+    protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
+        generateRubyRequireFile(classes, outputDir, mode);
     }
 
     @Override

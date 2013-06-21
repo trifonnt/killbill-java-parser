@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
+import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.Annotation;
 import com.ning.killbill.objects.ClassEnumOrInterface;
@@ -32,7 +33,7 @@ public class RubyClientApiGenerator extends BaseGenerator {
     }
 
     @Override
-    protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir) throws GeneratorException {
+    protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
         final File output = new File(outputDir, createFileName(obj.getName(), true));
 
         writeLicense(output);
@@ -81,12 +82,12 @@ public class RubyClientApiGenerator extends BaseGenerator {
     }
 
     @Override
-    protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
-        generateRubyRequireFile(classes, outputDir);
+    protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
+        generateRubyRequireFile(classes, outputDir, mode);
     }
 
     @Override
-    protected String getRequirePrefix() {
+    protected String getRequirePrefix(final GENERATOR_MODE mode) {
         return REQUIRE_PREFIX;
     }
 
