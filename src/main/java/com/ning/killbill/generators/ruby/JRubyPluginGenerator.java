@@ -368,7 +368,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
             } else if ("java.util.UUID".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".nil? ? nil : " + memberPrefix + member + ".to_s", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
-                writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".nil? ? 0 : " + memberPrefix + member + ".to_s.to_i", w, 0);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".nil? ? 0 : BigDecimal.new(" + memberPrefix + member + ".to_s)", w, 0);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
                        "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + memberPrefix + member + ".nil?", w, 0);
@@ -507,7 +507,7 @@ public class JRubyPluginGenerator extends BaseGenerator {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = java.math.BigDecimal::ZERO", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("else", w, -INDENT_LEVEL);
                 //writeWithIndentationAndNewLine(member + " = java.math.BigDecimal.new(" + member + ".respond_to?(:cents) ? " + member + ".cents : " + member + ".to_i)", w, INDENT_LEVEL);
-                writeWithIndentationAndNewLine(memberPrefix + member + " = java.math.BigDecimal.new(" + memberPrefix + member + ".to_i)", w, INDENT_LEVEL);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = java.math.BigDecimal.new(" + memberPrefix + member + ".to_s)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
                        "java.util.Date".equals(returnValueType)) {
