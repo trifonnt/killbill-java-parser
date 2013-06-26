@@ -20,7 +20,7 @@ public class RubyClientApiGenerator extends BaseGenerator {
 
     private final static int INDENT_LEVEL = 2;
     private final static String DEFAULT_BASE_CLASS = "Resource";
-    private final static String REQUIRE_PREFIX = "killbill_client/models/gen/";
+    private final static String REQUIRE_PREFIX = "killbill_client/models/gen";
 
     private final String[] MODULES = {"KillBillClient", "Model"};
 
