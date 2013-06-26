@@ -38,6 +38,8 @@ public class KillbillParserArgs {
     @Parameter(names = {"-x", "--classGeneratorExcludeFilter"}, variableArity = true, description ="A optional filter list of java packages for the parser")
     private List<String> classGeneratorExcludes = new ArrayList<String>();
 
+    @Parameter(names = "--help", help = true)
+    private boolean help;
 
     @Parameter(names = {"-t", "--target"}, description ="The target generator", required = true)
     private TARGET_GENERATOR targetGenerator;
@@ -96,6 +98,10 @@ public class KillbillParserArgs {
 
     public boolean isInputJar(final URI input) {
         return "jar".equals(input.getScheme());
+    }
+
+    public boolean isHelp() {
+        return help;
     }
 
     public static boolean isInputFile(final URI input) {

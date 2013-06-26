@@ -33,7 +33,12 @@ public class KillbillParser {
         }
 
 
-        final KillbillParserArgs kbParserArgs = parseArguments(args);
+        final KillbillParserArgs kbParserArgs = new KillbillParserArgs();
+        JCommander j = new JCommander(kbParserArgs, args);
+        if (kbParserArgs.isHelp()) {
+            j.usage();
+            return;
+        }
 
         logger.info("KillbillParser input = " + kbParserArgs.getInput() +
                     ", outputDir = " + kbParserArgs.getOutputDir().getAbsoluteFile() +
@@ -43,13 +48,6 @@ public class KillbillParser {
 
         final DistpatchGenerator gen = new DistpatchGenerator();
         gen.generate(kbParserArgs);
-    }
-
-
-    private static final KillbillParserArgs parseArguments(final String[] args) {
-        final KillbillParserArgs result = new KillbillParserArgs();
-        new JCommander(result, args);
-        return result;
     }
 
 
