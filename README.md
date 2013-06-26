@@ -9,7 +9,7 @@ It currently supports the following:
 * RUBY_CLIENT_API : Transformation for ruby models required for the ruby client library
 
 The tool is made out of:
-* A parser that unbderstands java grammar and allow to parse Kill Biull java files
+* A parser that understands java grammar and allow to parse Kill Bill java files
 * A specific generator for the desired output.
 
 Usage
