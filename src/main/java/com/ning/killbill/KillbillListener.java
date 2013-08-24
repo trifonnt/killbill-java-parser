@@ -372,7 +372,7 @@ public class KillbillListener extends JavaBaseListener {
         if (curInMethodBodyLevel > 0) {
             return;
         }
-        if (currentMethodOrCtor != null) {
+        if (currentMethodOrCtor != null && currentClassesEnumOrInterfaces.peekFirst() != null) {
             currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
             currentMethodOrCtor = null;
         }
@@ -686,7 +686,14 @@ public class KillbillListener extends JavaBaseListener {
             final ClassOrInterfaceTypeContext classOrInterfaceTypeContext = typeContext.classOrInterfaceType();
             parameterType = classOrInterfaceTypeContext.Identifier().get(0).getText();
             String bracketedParam = null;
-            if (classOrInterfaceTypeContext.typeArguments() != null && classOrInterfaceTypeContext.typeArguments().size() > 0) {
+            if (classOrInterfaceTypeContext.typeArguments() != null &&
+                classOrInterfaceTypeContext.typeArguments().size() > 0 &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument() != null &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().size() > 0 &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type() != null &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type().classOrInterfaceType() != null &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type().classOrInterfaceType().Identifier() != null &&
+                classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type().classOrInterfaceType().Identifier().size() > 0) {
                 bracketedParam =  classOrInterfaceTypeContext.typeArguments().get(0).typeArgument().get(0).type().classOrInterfaceType().Identifier().get(0).getText();
             }
             if (bracketedParam != null) {
@@ -722,7 +729,7 @@ public class KillbillListener extends JavaBaseListener {
 
     private Annotation createAnnotationFromAnnotationContext(final AnnotationContext annotationContext) {
         final String annotationName = annotationContext.annotationName().getText();
-        final String value = annotationContext.elementValue() != null ? annotationContext.elementValue().expression().primary().literal().getText() : null;
+        final String value = (annotationContext.elementValue() != null && annotationContext.elementValue().expression() != null && annotationContext.elementValue().expression().primary() != null) ? annotationContext.elementValue().expression().primary().literal().getText() : null;
 
         return new Annotation(annotationName, stripQuoteFromValue(value));
     }
@@ -767,7 +774,9 @@ public class KillbillListener extends JavaBaseListener {
         String bracketPartIfAny = null;
         Matcher m = KillbillListener.GENERIC_PATTERN.matcher(type);
         if (!m.matches()) {
-            throw new RuntimeException(GENERIC_PATTERN + " does not match " + type);
+            // Not a generic?
+            final String resolvedBaseType = resolveNonBracketedType(type);
+            return new Type(resolvedBaseType, null);
         }
         baseType = m.group(1);
         bracketPartIfAny = m.group(2);
