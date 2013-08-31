@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -722,10 +723,32 @@ public class KillbillListener extends JavaBaseListener {
 
     private Annotation createAnnotationFromAnnotationContext(final AnnotationContext annotationContext) {
         final String annotationName = annotationContext.annotationName().getText();
-        final String value = annotationContext.elementValue() != null ? annotationContext.elementValue().expression().primary().literal().getText() : null;
+
+        String value = null;
+        if (annotationContext.elementValue() != null) {
+            final List<String> valueParts = new LinkedList<String>();
+            buildValueForExpression(annotationContext.elementValue().expression(), valueParts);
+            final Joiner joiner = Joiner.on("");
+            value = joiner.join(valueParts);
+        }
 
         return new Annotation(annotationName, stripQuoteFromValue(value));
     }
+
+    private void buildValueForExpression(final JavaParser.ExpressionContext expression, final List<String> valueParts) {
+        if (expression.primary() != null) {
+            final String text = expression.primary().literal() != null ? expression.primary().literal().getText() :   expression.primary().getText();
+            valueParts.add(text);
+        } else {
+            final List<JavaParser.ExpressionContext> contexts = expression.expression();
+            for (JavaParser.ExpressionContext cur : contexts) {
+                buildValueForExpression(cur, valueParts);
+            }
+        }
+    }
+
+
+
 
     private String stripQuoteFromValue(final String value) {
         if (value != null && value.startsWith("\"") && (value.endsWith("\""))) {
