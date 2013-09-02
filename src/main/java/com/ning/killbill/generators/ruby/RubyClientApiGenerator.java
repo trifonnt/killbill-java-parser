@@ -14,7 +14,7 @@ import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Constructor;
 import com.ning.killbill.objects.Field;
 
-public class RubyClientApiGenerator extends BaseGenerator {
+public class RubyClientApiGenerator extends RubyBaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
 

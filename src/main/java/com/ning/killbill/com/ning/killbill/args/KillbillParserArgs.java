@@ -51,7 +51,8 @@ public class KillbillParserArgs {
     public enum TARGET_GENERATOR {
         JRUBY_PLUGIN,
         RUBY_CLIENT_API,
-        PHP_CLIENT_API
+        PHP_CLIENT_API,
+        JERSEY_DOC
     }
 
     public enum GENERATOR_MODE {

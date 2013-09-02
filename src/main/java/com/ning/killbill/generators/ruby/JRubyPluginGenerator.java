@@ -20,7 +20,7 @@ import com.ning.killbill.objects.Method;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-public class JRubyPluginGenerator extends BaseGenerator {
+public class JRubyPluginGenerator extends RubyBaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
     private final static int INDENT_LEVEL = 2;

@@ -19,11 +19,9 @@ package com.ning.billing.jaxrs.resources;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -75,10 +73,7 @@ import com.ning.billing.payment.api.PaymentApi;
 import com.ning.billing.payment.api.PaymentApiException;
 import com.ning.billing.payment.api.PaymentMethod;
 import com.ning.billing.payment.api.Refund;
-import com.ning.billing.subscription.api.timeline.BundleBaseTimeline;
-import com.ning.billing.subscription.api.timeline.SubscriptionBaseRepairException;
 import com.ning.billing.subscription.api.timeline.SubscriptionBaseTimelineApi;
-import com.ning.billing.subscription.api.user.SubscriptionBaseBundle;
 import com.ning.billing.util.api.AuditUserApi;
 import com.ning.billing.util.api.CustomFieldApiException;
 import com.ning.billing.util.api.CustomFieldUserApi;
@@ -110,7 +105,9 @@ public class AccountResource extends JaxRsResourceBase {
 
     private static final String ID_PARAM_NAME = "accountId";
 
+    private final EntitlementApi entitlementApi;
     private final SubscriptionApi subscriptionApi;
+    private final SubscriptionBaseTimelineApi timelineApi;
     private final InvoiceUserApi invoiceApi;
     private final InvoicePaymentApi invoicePaymentApi;
     private final PaymentApi paymentApi;
@@ -118,9 +115,11 @@ public class AccountResource extends JaxRsResourceBase {
     @Inject
     public AccountResource(final JaxrsUriBuilder uriBuilder,
                            final AccountUserApi accountApi,
+                           final EntitlementApi entitlementApi,
                            final InvoiceUserApi invoiceApi,
                            final InvoicePaymentApi invoicePaymentApi,
                            final PaymentApi paymentApi,
+                           final SubscriptionBaseTimelineApi timelineApi,
                            final TagUserApi tagUserApi,
                            final AuditUserApi auditUserApi,
                            final CustomFieldUserApi customFieldUserApi,
@@ -128,10 +127,12 @@ public class AccountResource extends JaxRsResourceBase {
                            final Clock clock,
                            final Context context) {
         super(uriBuilder, tagUserApi, customFieldUserApi, auditUserApi, accountApi, clock, context);
+        this.entitlementApi = entitlementApi;
         this.subscriptionApi = subscriptionApi;
         this.invoiceApi = invoiceApi;
         this.invoicePaymentApi = invoicePaymentApi;
         this.paymentApi = paymentApi;
+        this.timelineApi = timelineApi;
     }
 
     @GET

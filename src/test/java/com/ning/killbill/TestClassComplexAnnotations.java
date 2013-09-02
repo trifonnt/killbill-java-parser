@@ -6,9 +6,9 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static junit.framework.Assert.assertNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 public class TestClassComplexAnnotations extends TestBase {
 
@@ -19,10 +19,15 @@ public class TestClassComplexAnnotations extends TestBase {
         final List<ClassEnumOrInterface> classesorInterfaces = listener.getAllClassesEnumOrInterfaces();
         assertEquals(classesorInterfaces.size(), 1);
 
+
         final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         assertEquals(testClass.getName(), "AccountResource");
         assertEquals(testClass.isClass(), true);
-
+        assertEquals(testClass.getAnnotations().size(), 2);
+        assertEquals(testClass.getAnnotations().get(0).getName(), "Singleton");
+        assertNull(testClass.getAnnotations().get(0).getValue());
+        assertEquals(testClass.getAnnotations().get(1).getName(), "Path");
+        assertEquals(testClass.getAnnotations().get(1).getValue(), "JaxrsResource.ACCOUNTS_PATH");
 
         Method mGetAccount = getMethod("getAccount", testClass.getMethods());
         assertNotNull(mGetAccount);
@@ -32,16 +37,13 @@ public class TestClassComplexAnnotations extends TestBase {
         assertNull(mGetAccount.getAnnotations().get(0).getValue());
 
         assertEquals(mGetAccount.getAnnotations().get(1).getName(), "Path");
-        //assertNull(mGetAccount.getAnnotations().get(0).getValue(), "/{accountId:" + UUID_PATTERN + "}");
-        //System.out.println("value = " + mGetAccount.getAnnotations().get(1).getValue());
-
+        //assertEquals(mGetAccount.getAnnotations().get(1).getValue(), "/{accountId:\"UUID_PATTERN\"}");
         assertEquals(mGetAccount.getAnnotations().get(2).getName(), "Produces");
-        //System.out.println("value = " + mGetAccount.getAnnotations().get(2).getValue());
-
+        assertEquals(mGetAccount.getAnnotations().get(2).getValue(), "APPLICATION_JSON");
     }
 
     @Override
     public String getResourceName() {
-        return "ClassComplexAnnotations";
+        return "ClassWithComplexAnnotations";
     }
 }

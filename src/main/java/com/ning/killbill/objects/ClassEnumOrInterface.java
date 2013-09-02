@@ -15,6 +15,7 @@ public final class ClassEnumOrInterface {
     private final String name;
     private final ClassEnumOrInterfaceType type;
     private final List<String> superInterfaces;
+    protected final List<Annotation> annotations;
 
     private final String packageName;
     private String superBaseClass;
@@ -29,7 +30,7 @@ public final class ClassEnumOrInterface {
     private final List<Constructor> ctors;
 
 
-    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type, final String packageName, final boolean anAbstract) {
+    public ClassEnumOrInterface(final String name, final ClassEnumOrInterfaceType type, final String packageName, final List<Annotation> annotations, final boolean anAbstract) {
         this.name = name;
         this.type = type;
         this.packageName = packageName;
@@ -39,7 +40,8 @@ public final class ClassEnumOrInterface {
         this.superInterfaces = new ArrayList<String>();
         this.superBaseClass = null;
         this.enumValues = new ArrayList<String>();
-        fields = new ArrayList<Field>();
+        this.fields = new ArrayList<Field>();
+        this.annotations = annotations;
     }
 
     public void addConstructor(Constructor ctor) {
@@ -62,8 +64,16 @@ public final class ClassEnumOrInterface {
         superBaseClass = claz;
     }
 
-    public void addEnumValue(String value) {
+    public void addEnumValue(final String value) {
         enumValues.add(value);
+    }
+
+    public void addAnnotation(final Annotation annotation) {
+        annotations.add(annotation);
+    }
+
+    public List<Annotation> getAnnotations() {
+        return annotations;
     }
 
     public String getName() {
