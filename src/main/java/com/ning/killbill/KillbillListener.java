@@ -62,12 +62,16 @@ public class KillbillListener extends JavaBaseListener {
      */
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
     private MethodOrCtor currentMethodOrCtor;
+
     private List<String> currentMethodOrCtorModifiers;
     private List<Annotation> currentClassAnnotations;
     private List<Annotation> currentNonParameterAnnotations;
     private List<Annotation> currentParametersAnnotations;
     private Map<String, String> curTypeMethodParameters;
     private Map<String, String> curTypeClassEnumOrInterfaceParameters;
+
+    private Annotation currentAnnotation;
+    private StringBuffer elementValueForAnnotation;
 
     private int curInMethodBodyLevel;
 
@@ -100,6 +104,8 @@ public class KillbillListener extends JavaBaseListener {
         this.curTypeMethodParameters = null;
         this.curTypeClassEnumOrInterfaceParameters = null;
         this.packageName = null;
+        this.currentAnnotation = null;
+        this.elementValueForAnnotation = null;
         this.curInMethodBodyLevel = 0;
 
     }
@@ -518,8 +524,6 @@ public class KillbillListener extends JavaBaseListener {
             for (ClassOrInterfaceModifierContext cur : ctx.classOrInterfaceModifier()) {
                 if (cur.annotation() == null) {
                     currentMethodOrCtorModifiers.add(cur.getText());
-                } else {
-                    currentClassAnnotations.add(createAnnotationFromAnnotationContext(cur.annotation()));
                 }
             }
         }
@@ -527,7 +531,6 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void exitClassOrInterfaceModifiers(JavaParser.ClassOrInterfaceModifiersContext ctx) {
-        // Nothing to do
     }
 
     /*
@@ -546,9 +549,7 @@ public class KillbillListener extends JavaBaseListener {
             currentNonParameterAnnotations = new ArrayList<Annotation>();
             currentMethodOrCtorModifiers = new ArrayList<String>();
             for (ModifierContext cur : ctx.modifiers().modifier()) {
-                if (cur.annotation() != null) {
-                    currentNonParameterAnnotations.add(createAnnotationFromAnnotationContext(cur.annotation()));
-                } else {
+                if (cur.annotation() == null) {
                     currentMethodOrCtorModifiers.add(cur.getText());
                 }
             }
@@ -580,9 +581,6 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("** Entering enterVariableModifier" + ctx.getText());
 
-        if (currentParametersAnnotations != null && ctx.annotation() != null) {
-            currentParametersAnnotations.add(createAnnotationFromAnnotationContext(ctx.annotation()));
-        }
     }
 
 
@@ -718,34 +716,87 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Exiting exitFormalParameterDeclsRest" + ctx.getText());
     }
 
+    /*
+    *
+    * ************************************************ ANNOTATIONS *********************************************
+    */
+
+    @Override
+    public void enterAnnotation(JavaParser.AnnotationContext ctx) {
+        if (curInMethodBodyLevel > 0) {
+            return;
+        }
+        final String annotationName = ctx.annotationName().getText();
+        currentAnnotation = new Annotation(annotationName);
+    }
+
+    @Override
+    public void exitAnnotation(JavaParser.AnnotationContext ctx) {
+        if (curInMethodBodyLevel > 0) {
+            return;
+        }
+        if (elementValueForAnnotation != null) {
+            currentAnnotation.setValue(elementValueForAnnotation.toString());
+        }
+        if (currentParametersAnnotations != null) {
+            currentParametersAnnotations.add(currentAnnotation);
+        } else if (currentNonParameterAnnotations != null) {
+            currentNonParameterAnnotations.add(currentAnnotation);
+        } else if (currentClassAnnotations != null) {
+            currentClassAnnotations.add(currentAnnotation);
+        } else {
+            log.warn("Missing container for annotation " + currentAnnotation.getName());
+        }
+        elementValueForAnnotation = null;
+        currentAnnotation = null;
+    }
+
+
+
+    @Override
+    public void enterElementValue(JavaParser.ElementValueContext ctx) {
+        if (currentAnnotation != null) {
+            elementValueForAnnotation = new StringBuffer();
+            return;
+        }
+    }
+
+    @Override
+    public void exitElementValue(JavaParser.ElementValueContext ctx) {
+    }
+
+    @Override
+    public void enterExpression(JavaParser.ExpressionContext ctx) {
+
+    }
+
+    @Override
+    public void exitExpression(JavaParser.ExpressionContext ctx) {
+        if (elementValueForAnnotation != null) {
+            for (int i = 0; i < ctx.getChildCount(); i ++) {
+                if (! (ctx.getChild(i) instanceof JavaParser.ExpressionContext)) {
+                    final String value ;
+
+                    if (ctx.getChild(i) instanceof JavaParser.PrimaryContext) {
+                        value = ((JavaParser.PrimaryContext) ctx.getChild(i)).getText();
+                    } else {
+                        value = ctx.getChild(i).getText();
+                    }
+                    elementValueForAnnotation.append(stripQuoteFromValue(value));
+                }
+            }
+            return;
+        }
+
+    }
+
+
+
 
     /*
     *
     * ************************************************ HELPERS *********************************************
     */
-
-    private Annotation createAnnotationFromAnnotationContext(final AnnotationContext annotationContext) {
-        final String annotationName = annotationContext.annotationName().getText();
-
-        String value =  (annotationContext.elementValue() != null) ? annotationContext.elementValue().expression().getText() : null;
-        /*
-        if (annotationContext.elementValue() != null) {
-            final List<String> valueParts = new LinkedList<String>();
-            final JavaParser.ExpressionContext initialExpresion = annotationContext.elementValue().expression();
-            for (int i = 0; i < initialExpresion.getChildCount(); i++) {
-                final ParseTree el = initialExpresion.getChild(i);
-                if (el instanceof  JavaParser.ExpressionContext) {
-                    buildValueForExpression(annotationContext.elementValue().expression(), valueParts);
-                } else {
-                    valueParts.add(el.getText());
-                }
-            }
-            final Joiner joiner = Joiner.on("");
-            value = joiner.join(valueParts);
-        }
-*/
-        return new Annotation(annotationName, stripQuoteFromValue(value));
-    }
 
     private void buildValueForExpression(final JavaParser.ExpressionContext expression, final List<String> valueParts) {
         if (expression.primary() != null) {

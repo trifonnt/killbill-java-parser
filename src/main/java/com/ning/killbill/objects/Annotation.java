@@ -4,11 +4,17 @@ package com.ning.killbill.objects;
 public class Annotation {
 
     private final String name;
-    private final String value;
+    private String value;
 
+/*
     public Annotation(final String name, final String value) {
         this.name = name;
         this.value = value;
+    }
+  */
+
+    public Annotation(final String name) {
+        this.name = name;
     }
 
     public String getName() {
@@ -17,6 +23,10 @@ public class Annotation {
 
     public String getValue() {
         return value;
+    }
+
+    public void setValue(final String value) {
+        this.value = value;
     }
 
     @Override
