@@ -24,7 +24,7 @@ public class TestInterfaceWithEnums extends TestBase {
         assertEquals(testInterface.getSuperInterfaces().size(), 2);
         assertTrue(isSuperInterfaceDefined("com.ning.billing.junction.api.Blockable", testInterface.getSuperInterfaces()));
         assertTrue(isSuperInterfaceDefined("com.ning.billing.util.entity.Entity", testInterface.getSuperInterfaces()));
-        assertEquals(testInterface.getMethods().size(), 26);
+        assertEquals(testInterface.getMethodOrDecls().size(), 26);
 
         final ClassEnumOrInterface testEnum1 = getClassEnumOrInterface("SubscriptionSourceType", classesorInterfaces);
         assertNotNull(testEnum1);

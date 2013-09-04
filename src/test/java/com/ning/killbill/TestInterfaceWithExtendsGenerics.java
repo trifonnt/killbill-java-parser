@@ -2,11 +2,11 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -26,11 +26,11 @@ public class TestInterfaceWithExtendsGenerics extends TestBase {
         final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         assertEquals(testClass.getName(), "OSGIServiceRegistration");
         assertEquals(testClass.isInterface(), true);
-        assertEquals(testClass.getMethods().size(), 5);
+        assertEquals(testClass.getMethodOrDecls().size(), 5);
 
        // void registerService(OSGIServiceDescriptor desc, T service);
 
-        Method registerService = getMethod("registerService", testClass.getMethods());
+        MethodOrDecl registerService = getMethod("registerService", testClass.getMethodOrDecls());
         assertNotNull(registerService);
         assertFalse(registerService.isGetter());
         assertEquals(registerService.getReturnValueType().getBaseType(), "void");
@@ -41,7 +41,7 @@ public class TestInterfaceWithExtendsGenerics extends TestBase {
         assertEquals(registerService.getOrderedArguments().get(1).getName(), "service");
         assertEquals(registerService.getOrderedArguments().get(1).getType().getBaseType(), KillbillListener.UNDEFINED_GENERIC);
 
-        Method getAllServices = getMethod("getAllServices", testClass.getMethods());
+        MethodOrDecl getAllServices = getMethod("getAllServices", testClass.getMethodOrDecls());
         assertNotNull(getAllServices);
         Assert.assertTrue(getAllServices.isGetter());
         assertEquals(getAllServices.getReturnValueType().getBaseType(), "java.util.Set");
@@ -49,7 +49,7 @@ public class TestInterfaceWithExtendsGenerics extends TestBase {
         assertEquals(getAllServices.getOrderedArguments().size(), 0);
 
 
-        Method unregisterServices = getMethod("unregisterServices", testClass.getMethods());
+        MethodOrDecl unregisterServices = getMethod("unregisterServices", testClass.getMethodOrDecls());
         assertNotNull(unregisterServices);
         assertFalse(unregisterServices.isGetter());
         assertEquals(unregisterServices.getReturnValueType().getBaseType(), "void");

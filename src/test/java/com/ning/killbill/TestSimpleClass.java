@@ -2,11 +2,11 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.Field;
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -37,21 +37,21 @@ public class TestSimpleClass extends TestBase {
         assertNotNull(testClass.getSuperBaseClass());
         assertEquals(testClass.getSuperBaseClass(), "com.ning.billing.payment.Foo");
 
-        assertEquals(testClass.getMethods().size(), 7);
+        assertEquals(testClass.getMethodOrDecls().size(), 7);
 
-        Method getKey = getMethod("getKey", testClass.getMethods());
+        MethodOrDecl getKey = getMethod("getKey", testClass.getMethodOrDecls());
         assertNotNull(getKey);
         assertTrue(getKey.isGetter());
         assertEquals(getKey.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(getKey.getOrderedArguments().size(), 0);
 
-        Method hashCode = getMethod("hashCode", testClass.getMethods());
+        MethodOrDecl hashCode = getMethod("hashCode", testClass.getMethodOrDecls());
         assertNotNull(hashCode);
         assertFalse(hashCode.isGetter());
         assertEquals(hashCode.getReturnValueType().getBaseType(), "int");
         assertEquals(hashCode.getOrderedArguments().size(), 0);
 
-        Method mEquals = getMethod("equals", testClass.getMethods());
+        MethodOrDecl mEquals = getMethod("equals", testClass.getMethodOrDecls());
         assertNotNull(mEquals);
         assertFalse(mEquals.isGetter());
         assertEquals(mEquals.getReturnValueType().getBaseType(), "boolean");
@@ -62,31 +62,31 @@ public class TestSimpleClass extends TestBase {
         assertEquals(argument.getName(), "o");
 
 
-        Method mToString = getMethod("toString", testClass.getMethods());
+        MethodOrDecl mToString = getMethod("toString", testClass.getMethodOrDecls());
         assertNotNull(mToString);
         assertFalse(mToString.isGetter());
         assertEquals(mToString.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(mToString.getOrderedArguments().size(), 0);
 
-        Method mGetIsUpdatable = getMethod("getIsUpdatable", testClass.getMethods());
+        MethodOrDecl mGetIsUpdatable = getMethod("getIsUpdatable", testClass.getMethodOrDecls());
         assertNotNull(mGetIsUpdatable);
         assertTrue(mGetIsUpdatable.isGetter());
         assertEquals(mGetIsUpdatable.getReturnValueType().getBaseType(), "java.lang.Boolean");
         assertEquals(mGetIsUpdatable.getOrderedArguments().size(), 0);
 
-        Method mGetValue = getMethod("getValue", testClass.getMethods());
+        MethodOrDecl mGetValue = getMethod("getValue", testClass.getMethodOrDecls());
         assertNotNull(mGetValue);
         assertTrue(mGetValue.isGetter());
         assertEquals(mGetValue.getReturnValueType().getBaseType(), "int");
         assertEquals(mGetValue.getOrderedArguments().size(), 0);
 
-        Method mGetKey = getMethod("getKey", testClass.getMethods());
+        MethodOrDecl mGetKey = getMethod("getKey", testClass.getMethodOrDecls());
         assertNotNull(mGetKey);
         assertTrue(mGetKey.isGetter());
         assertEquals(mGetKey.getReturnValueType().getBaseType(), "java.lang.String");
         assertEquals(mGetKey.getOrderedArguments().size(), 0);
 
-        Method meMthodWithThreeArgs = getMethod("methodWithThreeArgs", testClass.getMethods());
+        MethodOrDecl meMthodWithThreeArgs = getMethod("methodWithThreeArgs", testClass.getMethodOrDecls());
         assertNotNull(meMthodWithThreeArgs);
         assertFalse(meMthodWithThreeArgs.isGetter());
         assertEquals(meMthodWithThreeArgs.getReturnValueType().getBaseType(), "void");

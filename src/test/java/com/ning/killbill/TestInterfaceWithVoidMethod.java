@@ -2,10 +2,10 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -25,8 +25,8 @@ public class TestInterfaceWithVoidMethod extends TestBase {
         final ClassEnumOrInterface testInterface = classesorInterfaces.get(0);
         assertEquals(testInterface.getName(), "AccountUserApi");
 
-        assertEquals(testInterface.getMethods().size(), 10);
-        Method updateAccount = getMethod("updateAccount", testInterface.getMethods());
+        assertEquals(testInterface.getMethodOrDecls().size(), 10);
+        MethodOrDecl updateAccount = getMethod("updateAccount", testInterface.getMethodOrDecls());
         assertNotNull(updateAccount);
         assertFalse(updateAccount.isGetter());
         assertEquals(updateAccount.getOrderedArguments().size(), 2);

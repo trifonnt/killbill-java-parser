@@ -2,7 +2,7 @@ package com.ning.killbill.objects;
 
 import java.util.List;
 
-public class Constructor extends MethodOrCtor {
+public class Constructor extends MethodCtorOrDecl {
 
     public Constructor(final String name, final boolean isAbstract, final List<Annotation> annotations) {
         super(name, isAbstract, annotations);
@@ -17,4 +17,5 @@ public class Constructor extends MethodOrCtor {
         sb.append('}');
         return sb.toString();
     }
+
 }

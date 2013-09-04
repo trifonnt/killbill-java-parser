@@ -2,10 +2,10 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -25,9 +25,9 @@ public class TestInterfaceWithGenericMethods extends TestBase {
         final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         assertEquals(testClass.getName(), "OverdueUserApi");
         assertEquals(testClass.isInterface(), true);
-        assertEquals(testClass.getMethods().size(), 4);
+        assertEquals(testClass.getMethodOrDecls().size(), 4);
 
-        Method refreshOverdueStateFor = getMethod("refreshOverdueStateFor", testClass.getMethods());
+        MethodOrDecl refreshOverdueStateFor = getMethod("refreshOverdueStateFor", testClass.getMethodOrDecls());
         assertNotNull(refreshOverdueStateFor);
         assertFalse(refreshOverdueStateFor.isGetter());
         assertEquals(refreshOverdueStateFor.getReturnValueType().getBaseType(), "com.ning.billing.overdue.OverdueState");
@@ -40,7 +40,7 @@ public class TestInterfaceWithGenericMethods extends TestBase {
         assertEquals(refreshOverdueStateFor.getOrderedArguments().get(1).getName(), "context");
         assertEquals(refreshOverdueStateFor.getOrderedArguments().get(1).getType().getBaseType(), "com.ning.billing.util.callcontext.CallContext");
 
-        Method setOverrideBillingStateForAccount = getMethod("setOverrideBillingStateForAccount", testClass.getMethods());
+        MethodOrDecl setOverrideBillingStateForAccount = getMethod("setOverrideBillingStateForAccount", testClass.getMethodOrDecls());
         assertNotNull(setOverrideBillingStateForAccount);
         assertFalse(setOverrideBillingStateForAccount.isGetter());
         assertEquals(setOverrideBillingStateForAccount.getReturnValueType().getBaseType(), "void");

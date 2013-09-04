@@ -2,13 +2,13 @@ package com.ning.killbill.objects;
 
 import java.util.List;
 
-public final class Field {
+public class Field {
 
 
-    private final String name;
-    private final Type type;
+    protected final String name;
+    protected final Type type;
 
-    private final List<Annotation> annotations;
+    protected final List<Annotation> annotations;
 
     public Field(final String name, final Type type, final List<Annotation> annotations) {
         this.name = name;
@@ -23,6 +23,7 @@ public final class Field {
     public Type getType() {
         return type;
     }
+
 
     public List<Annotation> getAnnotations() {
         return annotations;

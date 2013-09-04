@@ -10,7 +10,7 @@ import com.ning.killbill.objects.Annotation;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Constructor;
 import com.ning.killbill.objects.Field;
-import com.ning.killbill.objects.Method;
+import com.ning.killbill.objects.MethodOrDecl;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -73,7 +73,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         final Annotation classPathAnnotation = getPathAnnotation(classAnnotations);
         final String pathPrefix = classPathAnnotation.getValue();
 
-        for (Method m : cur.getMethods()) {
+        for (MethodOrDecl m : cur.getMethodOrDecls()) {
             Annotation httpVerbAnnotation = getHttpMethodAnnotation(m.getAnnotations());
             if (httpVerbAnnotation == null) {
                 continue;
@@ -83,7 +83,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         }
     }
 
-    private void generateAPISignature(final Method method, final String pathPrefix, final String verb, final Writer w) throws IOException {
+    private void generateAPISignature(final MethodOrDecl method, final String pathPrefix, final String verb, final Writer w) throws IOException {
 
         final Annotation methodPathAnnotation = getPathAnnotation(method.getAnnotations());
         final String path = pathPrefix +
@@ -96,7 +96,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         w.flush();
     }
 
-    private void generateJsonIfRequired(final Method method, List<ClassEnumOrInterface> allClasses, final String verb, final Writer w) throws IOException, GeneratorException {
+    private void generateJsonIfRequired(final MethodOrDecl method, List<ClassEnumOrInterface> allClasses, final String verb, final Writer w) throws IOException, GeneratorException {
         final List<Field> arguments = method.getOrderedArguments();
         final Field firstArgument = arguments.size() >= 1 ? arguments.get(0) : null;
         if (verb.equals("GET") ||

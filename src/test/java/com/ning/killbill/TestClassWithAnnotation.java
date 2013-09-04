@@ -2,12 +2,12 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.Field;
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Constructor;
-import com.ning.killbill.objects.Method;
 
 
 import static junit.framework.Assert.assertNull;
@@ -70,9 +70,9 @@ public class TestClassWithAnnotation extends TestBase {
         assertEquals(fEmail.getType().getBaseType(), "java.lang.String");
         assertEquals(fEmail.getAnnotations().size(), 0);
 
-        assertEquals(testClass.getMethods().size(), 3);
+        assertEquals(testClass.getMethodOrDecls().size(), 3);
 
-        Method mToAccountEmail = getMethod("toAccountEmail", testClass.getMethods());
+        MethodOrDecl mToAccountEmail = getMethod("toAccountEmail", testClass.getMethodOrDecls());
         assertNotNull(mToAccountEmail);
         assertFalse(mToAccountEmail.isGetter());
         assertEquals(mToAccountEmail.getOrderedArguments().size(), 1);

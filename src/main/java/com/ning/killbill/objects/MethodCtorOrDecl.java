@@ -3,7 +3,7 @@ package com.ning.killbill.objects;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class MethodOrCtor {
+public abstract class MethodCtorOrDecl {
 
     protected final String name;
     protected final List<Field> orderedArguments;
@@ -14,7 +14,9 @@ public abstract class MethodOrCtor {
 
     protected final List<String> exceptions;
 
-    public MethodOrCtor(final String name, final boolean isAbstract, final List<Annotation> annotations) {
+    protected String initializerValue;
+
+    public MethodCtorOrDecl(final String name, final boolean isAbstract, final List<Annotation> annotations) {
         this.name = name;
         this.annotations = annotations;
         this.orderedArguments = new ArrayList<Field>();
@@ -49,5 +51,13 @@ public abstract class MethodOrCtor {
 
     public List<String> getExceptions() {
         return exceptions;
+    }
+
+    public String getInitializerValue() {
+        return initializerValue;
+    }
+
+    public void setInitializerValue(String initializerValue) {
+        this.initializerValue = initializerValue;
     }
 }

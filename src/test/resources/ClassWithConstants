@@ -1,0 +1,7 @@
+public interface JaxrsResource {
+
+    public static final String API_PREFIX = "boo";
+    public static final String API_PREFIX2 = "grrrrrr";
+
+    public String methodFoo(final String foo);
+}

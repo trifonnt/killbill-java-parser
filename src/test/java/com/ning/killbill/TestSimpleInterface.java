@@ -2,11 +2,11 @@ package com.ning.killbill;
 
 import java.util.List;
 
+import com.ning.killbill.objects.Field;
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -33,8 +33,8 @@ public class TestSimpleInterface extends TestBase {
         assertEquals(testInterface.isEnum(), false);
         assertEquals(testInterface.isClass(), false);
 
-        assertEquals(testInterface.getMethods().size(), 2);
-        Method toMutableAccountData = getMethod("toMutableAccountData", testInterface.getMethods());
+        assertEquals(testInterface.getMethodOrDecls().size(), 2);
+        MethodOrDecl toMutableAccountData = getMethod("toMutableAccountData", testInterface.getMethodOrDecls());
         assertNotNull(toMutableAccountData);
         assertFalse(toMutableAccountData.isGetter());
         assertEquals(toMutableAccountData.getOrderedArguments().size(), 0);
@@ -44,7 +44,7 @@ public class TestSimpleInterface extends TestBase {
         assertTrue(toMutableAccountData.getExceptions().contains("com.ning.billing.MyCrazyException"));
         assertTrue(toMutableAccountData.getExceptions().contains("com.ning.billing.account.api.NoSuchAccount"));
 
-        Method mergeWithDelegate = getMethod("mergeWithDelegate", testInterface.getMethods());
+        MethodOrDecl mergeWithDelegate = getMethod("mergeWithDelegate", testInterface.getMethodOrDecls());
         assertNotNull(mergeWithDelegate);
         assertFalse(mergeWithDelegate.isGetter());
         assertEquals(mergeWithDelegate.getOrderedArguments().size(), 1);

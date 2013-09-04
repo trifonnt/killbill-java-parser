@@ -24,7 +24,7 @@ public final class ClassEnumOrInterface {
 
 
     private final List<String> enumValues;
-    private final List<Method> methods;
+    private final List<MethodOrDecl> methodOrDecls;
 
     private final List<Field> fields;
     private final List<Constructor> ctors;
@@ -35,7 +35,7 @@ public final class ClassEnumOrInterface {
         this.type = type;
         this.packageName = packageName;
         this.isAbstract = anAbstract;
-        this.methods = new ArrayList<Method>();
+        this.methodOrDecls = new ArrayList<MethodOrDecl>();
         this.ctors = new ArrayList<Constructor>();
         this.superInterfaces = new ArrayList<String>();
         this.superBaseClass = null;
@@ -48,8 +48,8 @@ public final class ClassEnumOrInterface {
         ctors.add(ctor);
     }
 
-    public void addMethod(Method method) {
-        methods.add(method);
+    public void addMethod(MethodOrDecl method) {
+        methodOrDecls.add(method);
     }
 
     public void addField(Field field) {
@@ -104,8 +104,8 @@ public final class ClassEnumOrInterface {
         return ctors;
     }
 
-    public List<Method> getMethods() {
-        return methods;
+    public List<MethodOrDecl> getMethodOrDecls() {
+        return methodOrDecls;
     }
 
     public List<Field> getFields() {
@@ -137,7 +137,7 @@ public final class ClassEnumOrInterface {
         sb.append(", superInterfaces=").append(superInterfaces);
         sb.append(", superBaseClass='").append(superBaseClass).append('\'');
         sb.append(", enumValues=").append(enumValues);
-        sb.append(", methods=").append(methods);
+        sb.append(", methodOrDecls=").append(methodOrDecls);
         sb.append(", fields=").append(fields);
         sb.append(", ctors=").append(ctors);
         sb.append('}');

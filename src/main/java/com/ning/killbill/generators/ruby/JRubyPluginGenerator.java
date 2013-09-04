@@ -15,7 +15,7 @@ import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MOD
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Field;
-import com.ning.killbill.objects.Method;
+import com.ning.killbill.objects.MethodOrDecl;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -60,9 +60,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
 
             generateStartModules(w, isApi);
 
-            final List<Method> flattenedMethods = new ArrayList<Method>();
+            final List<MethodOrDecl> flattenedMethods = new ArrayList<MethodOrDecl>();
             flattenedMethods.addAll(getTopMethods(obj, allClasses));
-            flattenedMethods.addAll(obj.getMethods());
+            flattenedMethods.addAll(obj.getMethodOrDecls());
 
             dedupPreserveOrder(flattenedMethods);
 
@@ -127,7 +127,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
 
-    private void generateForKillbillApi(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods, GENERATOR_MODE mode) throws IOException, GeneratorException {
+    private void generateForKillbillApi(final ClassEnumOrInterface obj, final Writer w, final List<MethodOrDecl> flattenedMethods, GENERATOR_MODE mode) throws IOException, GeneratorException {
 
 
         if (mode == GENERATOR_MODE.JRUBY_API) {
@@ -136,7 +136,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             generatePluginApiInitializeMethod(w);
         }
 
-        for (final Method m : flattenedMethods) {
+        for (final MethodOrDecl m : flattenedMethods) {
             final String methodName = generateMethodSignature(w, m);
             generateMethodArgumentConversion(w, mode, m);
             if (mode == GENERATOR_MODE.JRUBY_API) {
@@ -162,7 +162,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeNewLine(w);
     }
 
-    private void generatePluginApiMethodReturnConversion(final Writer w, final Method m, final String methodName) throws IOException, GeneratorException {
+    private void generatePluginApiMethodReturnConversion(final Writer w, final MethodOrDecl m, final String methodName) throws IOException, GeneratorException {
 
 
         final boolean isVoidReturn = "void".equals(m.getReturnValueType().getBaseType());
@@ -201,7 +201,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
     }
 
-    private void generateApiMethodReturnConversion(final Writer w, final Method m, final String methodName) throws IOException, GeneratorException {
+    private void generateApiMethodReturnConversion(final Writer w, final MethodOrDecl m, final String methodName) throws IOException, GeneratorException {
         final boolean isVoidReturn = "void".equals(m.getReturnValueType().getBaseType());
         final boolean gotExceptions = (m.getExceptions().size() > 0);
         if (gotExceptions) {
@@ -244,7 +244,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
     }
 
-    private void generateMethodArgumentConversion(final Writer w, final GENERATOR_MODE mode, final Method m) throws GeneratorException, IOException {
+    private void generateMethodArgumentConversion(final Writer w, final GENERATOR_MODE mode, final MethodOrDecl m) throws GeneratorException, IOException {
 
         boolean firstArg = true;
         for (Field f : m.getOrderedArguments()) {
@@ -259,7 +259,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
     }
 
-    private String generateMethodSignature(final Writer w, final Method m) throws IOException {
+    private String generateMethodSignature(final Writer w, final MethodOrDecl m) throws IOException {
 
         final String returnValue = m.getReturnValueType().getBaseType();
         writeNewLine(w);
@@ -295,7 +295,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         return fileName.endsWith("Api");
     }
 
-    private void generateForPojo(final ClassEnumOrInterface obj, final Writer w, final List<Method> flattenedMethods) throws IOException, GeneratorException {
+    private void generateForPojo(final ClassEnumOrInterface obj, final Writer w, final List<MethodOrDecl> flattenedMethods) throws IOException, GeneratorException {
         generateAttributeAccessorFromGetterMethods(obj, flattenedMethods, w);
 
         writeWithIndentationAndNewLine("def initialize()", w, 0);
@@ -308,10 +308,10 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
 
-    private void generateToRuby(final ClassEnumOrInterface obj, final List<Method> flattenedMethods, final Writer w) throws IOException, GeneratorException {
+    private void generateToRuby(final ClassEnumOrInterface obj, final List<MethodOrDecl> flattenedMethods, final Writer w) throws IOException, GeneratorException {
         boolean first = true;
         writeWithIndentationAndNewLine("def to_ruby(j_obj)", w, 0);
-        for (final Method m : flattenedMethods) {
+        for (final MethodOrDecl m : flattenedMethods) {
             if (!m.isGetter()) {
                 continue;
             }
@@ -328,7 +328,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeNewLine(w);
     }
 
-    private void writeConversionToRuby(final Method m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
+    private void writeConversionToRuby(final MethodOrDecl m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
         final String member = camelToUnderscore(convertGetterMethodToFieldName(m.getName()));
         final String returnValueType = m.getReturnValueType().getBaseType();
         final String returnValueGeneric = m.getReturnValueType().getGenericType();
@@ -416,10 +416,10 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         return jrubyObject;
     }
 
-    private void generateToJava(final ClassEnumOrInterface obj, final List<Method> flattenedMethods, final Writer w) throws IOException, GeneratorException {
+    private void generateToJava(final ClassEnumOrInterface obj, final List<MethodOrDecl> flattenedMethods, final Writer w) throws IOException, GeneratorException {
         boolean first = true;
         writeWithIndentationAndNewLine("def to_java()", w, 0);
-        for (final Method m : flattenedMethods) {
+        for (final MethodOrDecl m : flattenedMethods) {
             if (!m.isGetter()) {
                 continue;
             }
@@ -439,7 +439,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         if (obj.isClass()) {
             writeWithIndentation("Java::" + obj.getPackageName() + "." + obj.getName() + ".new(", w, 0);
             first = true;
-            for (final Method m : flattenedMethods) {
+            for (final MethodOrDecl m : flattenedMethods) {
                 if (!m.isGetter()) {
                     continue;
                 }
@@ -460,7 +460,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
 
-    private void writeConversionToJava(final Method m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
+    private void writeConversionToJava(final MethodOrDecl m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
         final String member = camelToUnderscore(convertGetterMethodToFieldName(m.getName()));
         final String returnValueType = m.getReturnValueType().getBaseType();
         final String returnValueGeneric = m.getReturnValueType().getGenericType();
@@ -549,10 +549,10 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
 
-    private void dedupPreserveOrder(final List<Method> flattenedMethods) {
+    private void dedupPreserveOrder(final List<MethodOrDecl> flattenedMethods) {
 
         final TreeSet<String> currentMethodNames = new TreeSet<String>();
-        final Iterator<Method> it = flattenedMethods.iterator();
+        final Iterator<MethodOrDecl> it = flattenedMethods.iterator();
         while (it.hasNext()) {
             final String methodName = it.next().getName();
             if (currentMethodNames.contains(methodName)) {
@@ -563,10 +563,10 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
     }
 
-    private void generateAttributeAccessorFromGetterMethods(final ClassEnumOrInterface obj, final List<Method> flattenedMethods, final Writer w) throws IOException, GeneratorException {
+    private void generateAttributeAccessorFromGetterMethods(final ClassEnumOrInterface obj, final List<MethodOrDecl> flattenedMethods, final Writer w) throws IOException, GeneratorException {
         boolean first = true;
         writeWithIndentation("attr_accessor ", w, obj.isInterface() ? 0 : INDENT_LEVEL);
-        for (final Method m : flattenedMethods) {
+        for (final MethodOrDecl m : flattenedMethods) {
             if (!m.isGetter()) {
                 continue;
             }
@@ -624,11 +624,11 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         return LICENSE_NAME;
     }
 
-    private List<Method> getTopMethods(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
+    private List<MethodOrDecl> getTopMethods(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
         if (obj.isEnum()) {
             return Collections.emptyList();
         }
-        final List<Method> result = new ArrayList<Method>();
+        final List<MethodOrDecl> result = new ArrayList<MethodOrDecl>();
         if (obj.isClass()) {
             getMethodsFromExtendedClasses(obj, allClasses, result);
         } else if (obj.isInterface()) {
@@ -639,7 +639,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         return result;
     }
 
-    private void getMethodsFromExtendedInterfaces(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final List<Method> result) throws GeneratorException {
+    private void getMethodsFromExtendedInterfaces(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final List<MethodOrDecl> result) throws GeneratorException {
         // Reverse list to match original algorithm from ruby parser
         final List<String> superInterfaces = Lists.reverse(obj.getSuperInterfaces());
         for (final String cur : superInterfaces) {
@@ -649,12 +649,12 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             }
 
             final ClassEnumOrInterface ifce = findClassEnumOrInterface(cur, allClasses);
-            result.addAll(ifce.getMethods());
+            result.addAll(ifce.getMethodOrDecls());
             getMethodsFromExtendedInterfaces(ifce, allClasses, result);
         }
     }
 
-    private void getMethodsFromExtendedClasses(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final List<Method> result) throws GeneratorException {
+    private void getMethodsFromExtendedClasses(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final List<MethodOrDecl> result) throws GeneratorException {
         final String superBaseClass = obj.getSuperBaseClass();
         if (superBaseClass == null) {
             return;
@@ -664,7 +664,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             return;
         }
         final ClassEnumOrInterface superClass = findClassEnumOrInterface(superBaseClass, allClasses);
-        result.addAll(superClass.getMethods());
+        result.addAll(superClass.getMethodOrDecls());
         getMethodsFromExtendedClasses(superClass, allClasses, result);
     }
 

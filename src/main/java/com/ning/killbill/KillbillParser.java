@@ -20,9 +20,9 @@ public class KillbillParser {
 
     public final static Logger logger = LoggerFactory.getLogger(KillbillParser.class);
 
-    private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/Src/Killbill/killbill-java-parser/src/test/resources/ClassWithComplexAnnotations";
+    private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/Src/Killbill/killbill-java-parser/src/test/resources/ClassWithConstants";
 
-    private final static boolean DEBUG_MODE = false;
+    private final static boolean DEBUG_MODE = true;
 
 
     public static void main(String[] args) throws Exception {

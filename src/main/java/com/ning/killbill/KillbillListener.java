@@ -1,7 +1,6 @@
 package com.ning.killbill;
 
 import com.google.common.base.Joiner;
-import com.ning.killbill.JavaParser.AnnotationContext;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.ClassOrInterfaceModifierContext;
 import com.ning.killbill.JavaParser.ClassOrInterfaceTypeContext;
@@ -26,10 +25,9 @@ import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.ClassEnumOrInterface.ClassEnumOrInterfaceType;
 import com.ning.killbill.objects.Constructor;
 import com.ning.killbill.objects.Field;
-import com.ning.killbill.objects.Method;
-import com.ning.killbill.objects.MethodOrCtor;
+import com.ning.killbill.objects.MethodCtorOrDecl;
+import com.ning.killbill.objects.MethodOrDecl;
 import com.ning.killbill.objects.Type;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -49,6 +46,7 @@ public class KillbillListener extends JavaBaseListener {
     public static final String JAVA_LANG = "java.lang.";
 
     public static Pattern GENERIC_PATTERN = Pattern.compile("(\\w*)(?:<(.*)>){0,1}\\s*");
+
 
     public static final String UNDEFINED_GENERIC = "Undefined";
 
@@ -61,7 +59,7 @@ public class KillbillListener extends JavaBaseListener {
      *  Tracks current state as we walk through the tree.
      */
     private final Deque<ClassEnumOrInterface> currentClassesEnumOrInterfaces;
-    private MethodOrCtor currentMethodOrCtor;
+    private MethodCtorOrDecl currentMethodCtorOrDecl;
 
     private List<String> currentMethodOrCtorModifiers;
     private List<Annotation> currentClassAnnotations;
@@ -96,7 +94,7 @@ public class KillbillListener extends JavaBaseListener {
         this.allClassesEnumOrInterfaces = new ArrayList<ClassEnumOrInterface>();
         this.allImports = new HashMap<String, String>();
         this.currentClassesEnumOrInterfaces = new ArrayDeque<ClassEnumOrInterface>();
-        this.currentMethodOrCtor = null;
+        this.currentMethodCtorOrDecl = null;
         this.currentMethodOrCtorModifiers = null;
         this.currentParametersAnnotations = null;
         this.currentNonParameterAnnotations = null;
@@ -273,7 +271,7 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Entering enterInterfaceMethodOrFieldDecl" + ctx.getText());
 
         final String returnValueType = (ctx.type().primitiveType() != null) ? ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
-        currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
+        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
     }
 
     @Override
@@ -282,8 +280,8 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
 
-        currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
-        currentMethodOrCtor = null;
+        currentClassesEnumOrInterfaces.peekFirst().addMethod((MethodOrDecl) currentMethodCtorOrDecl);
+        currentMethodCtorOrDecl = null;
         log.debug("** Exiting exitInterfaceMethodOrFieldDecl" + ctx.getText());
     }
 
@@ -294,7 +292,7 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
         log.debug("** Entering enterVoidInterfaceMethodDeclaratorRest" + ctx.getText());
-        currentMethodOrCtor = new Method(((InterfaceMemberDeclContext) ctx.getParent()).Identifier().getText(), VOID_TYPE, true, currentNonParameterAnnotations);
+        currentMethodCtorOrDecl = new MethodOrDecl(((InterfaceMemberDeclContext) ctx.getParent()).Identifier().getText(), VOID_TYPE, true, currentNonParameterAnnotations);
     }
 
     @Override
@@ -302,8 +300,8 @@ public class KillbillListener extends JavaBaseListener {
         if (curInMethodBodyLevel > 0) {
             return;
         }
-        currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
-        currentMethodOrCtor = null;
+        currentClassesEnumOrInterfaces.peekFirst().addMethod((MethodOrDecl) currentMethodCtorOrDecl);
+        currentMethodCtorOrDecl = null;
         log.debug("** Exiting exitVoidInterfaceMethodDeclaratorRest" + ctx.getText());
     }
 
@@ -327,14 +325,14 @@ public class KillbillListener extends JavaBaseListener {
             exitTypeParameters(ctx.typeParameters());
         }
         */
-        currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
+        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
     }
 
     @Override
     public void exitInterfaceGenericMethodDecl(JavaParser.InterfaceGenericMethodDeclContext ctx) {
         log.debug("** Exiting exitInterfaceGenericMethodDecl" + ctx.getText());
-        currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
-        currentMethodOrCtor = null;
+        currentClassesEnumOrInterfaces.peekFirst().addMethod((MethodOrDecl) currentMethodCtorOrDecl);
+        currentMethodCtorOrDecl = null;
         curTypeMethodParameters = null;
     }
 
@@ -346,7 +344,7 @@ public class KillbillListener extends JavaBaseListener {
             for (QualifiedNameContext cur : ctx.qualifiedNameList().qualifiedName()) {
                 final String exception = cur.Identifier().get(0).getText();
                 final String resolvedException = getFullyQualifiedType(exception).getBaseType();
-                currentMethodOrCtor.addException(resolvedException);
+                currentMethodCtorOrDecl.addException(resolvedException);
             }
         }
     }
@@ -355,6 +353,20 @@ public class KillbillListener extends JavaBaseListener {
     public void exitInterfaceMethodDeclaratorRest(JavaParser.InterfaceMethodDeclaratorRestContext ctx) {
         log.debug("** Exiting exitInterfaceMethodDeclaratorRest" + ctx.getText());
     }
+
+
+    @Override
+    public void enterVariableInitializer(JavaParser.VariableInitializerContext ctx) {
+        if (currentMethodCtorOrDecl != null && ctx.expression().primary() != null) {
+            final String value = stripQuoteFromValue(ctx.expression().primary().getText());
+            currentMethodCtorOrDecl.setInitializerValue(value);
+        }
+    }
+
+    @Override
+    public void exitVariableInitializer(JavaParser.VariableInitializerContext ctx) {
+    }
+
 
     /*
     *
@@ -370,7 +382,7 @@ public class KillbillListener extends JavaBaseListener {
         if (!isIncludedInMethodOrCtorModifier("private", "protected", "static")) {
             final TypeContext typeContext = ((MemberDeclarationContext) ctx.getParent()).type();
             final String returnValueType = (typeContext.primitiveType() != null) ? typeContext.primitiveType().getText() : typeContext.classOrInterfaceType().getText();
-            currentMethodOrCtor = new Method(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
+            currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
         }
     }
 
@@ -379,9 +391,9 @@ public class KillbillListener extends JavaBaseListener {
         if (curInMethodBodyLevel > 0) {
             return;
         }
-        if (currentMethodOrCtor != null) {
-            currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
-            currentMethodOrCtor = null;
+        if (currentMethodCtorOrDecl != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod((MethodOrDecl) currentMethodCtorOrDecl);
+            currentMethodCtorOrDecl = null;
         }
         log.debug("** Exiting exitMethodDeclaration" + ctx.getText());
     }
@@ -395,7 +407,7 @@ public class KillbillListener extends JavaBaseListener {
 
         if (!isIncludedInMethodOrCtorModifier("private", "protected", "static")) {
             MemberDeclContext meberDecl = (MemberDeclContext) ctx.getParent();
-            currentMethodOrCtor = new Method(meberDecl.Identifier().getText(), VOID_TYPE, isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
+            currentMethodCtorOrDecl = new MethodOrDecl(meberDecl.Identifier().getText(), VOID_TYPE, isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
         }
 
     }
@@ -406,9 +418,9 @@ public class KillbillListener extends JavaBaseListener {
             return;
         }
 
-        if (currentMethodOrCtor != null) {
-            currentClassesEnumOrInterfaces.peekFirst().addMethod((Method) currentMethodOrCtor);
-            currentMethodOrCtor = null;
+        if (currentMethodCtorOrDecl != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addMethod((MethodOrDecl) currentMethodCtorOrDecl);
+            currentMethodCtorOrDecl = null;
         }
         log.debug("** Exiting exitVoidMethodDeclaratorRest" + ctx.getText());
     }
@@ -435,7 +447,7 @@ public class KillbillListener extends JavaBaseListener {
         }
         log.debug("** Entering enterConstructorDeclaratorRest" + ctx.getText());
         final MemberDeclContext ctor = (MemberDeclContext) ctx.getParent();
-        currentMethodOrCtor = new Constructor(ctor.Identifier().getText(), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
+        currentMethodCtorOrDecl = new Constructor(ctor.Identifier().getText(), isIncludedInMethodOrCtorModifier("abstract"), currentNonParameterAnnotations);
     }
 
     @Override
@@ -445,9 +457,9 @@ public class KillbillListener extends JavaBaseListener {
         }
 
         log.debug("** Exiting exitConstructorDeclaratorRest" + ctx.getText());
-        if (currentMethodOrCtor != null) {
-            currentClassesEnumOrInterfaces.peekFirst().addConstructor((Constructor) currentMethodOrCtor);
-            currentMethodOrCtor = null;
+        if (currentMethodCtorOrDecl != null) {
+            currentClassesEnumOrInterfaces.peekFirst().addConstructor((Constructor) currentMethodCtorOrDecl);
+            currentMethodCtorOrDecl = null;
         }
     }
 
@@ -667,7 +679,7 @@ public class KillbillListener extends JavaBaseListener {
     @Override
     public void enterFormalParameterDecls(JavaParser.FormalParameterDeclsContext ctx) {
 
-        if (currentMethodOrCtor == null && !currentClassesEnumOrInterfaces.peekFirst().isEnum()) {
+        if (currentMethodCtorOrDecl == null && !currentClassesEnumOrInterfaces.peekFirst().isEnum()) {
             log.warn("enterFormalParameters : no curentMethod ");
             return;
         }
@@ -705,8 +717,8 @@ public class KillbillListener extends JavaBaseListener {
 
         log.debug("enterFormalParameters : parameter " + parameterType + ":" + parameterVariableName);
 
-        if (currentMethodOrCtor != null) {
-            currentMethodOrCtor.addArgument(new Field(parameterVariableName, getFullyQualifiedType(parameterType), currentParametersAnnotations));
+        if (currentMethodCtorOrDecl != null) {
+            currentMethodCtorOrDecl.addArgument(new Field(parameterVariableName, getFullyQualifiedType(parameterType), currentParametersAnnotations));
         }
     }
 
@@ -752,7 +764,6 @@ public class KillbillListener extends JavaBaseListener {
     }
 
 
-
     @Override
     public void enterElementValue(JavaParser.ElementValueContext ctx) {
         if (currentAnnotation != null) {
@@ -773,9 +784,9 @@ public class KillbillListener extends JavaBaseListener {
     @Override
     public void exitExpression(JavaParser.ExpressionContext ctx) {
         if (elementValueForAnnotation != null) {
-            for (int i = 0; i < ctx.getChildCount(); i ++) {
-                if (! (ctx.getChild(i) instanceof JavaParser.ExpressionContext)) {
-                    final String value ;
+            for (int i = 0; i < ctx.getChildCount(); i++) {
+                if (!(ctx.getChild(i) instanceof JavaParser.ExpressionContext)) {
+                    final String value;
 
                     if (ctx.getChild(i) instanceof JavaParser.PrimaryContext) {
                         value = ((JavaParser.PrimaryContext) ctx.getChild(i)).getText();

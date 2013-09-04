@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
+import com.ning.killbill.objects.Field;
+import com.ning.killbill.objects.MethodOrDecl;
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -14,8 +16,6 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.testng.annotations.BeforeClass;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Field;
-import com.ning.killbill.objects.Method;
 
 import com.google.common.io.Resources;
 
@@ -38,8 +38,8 @@ public abstract class TestBase {
         walker.walk(listener, tree);
     }
 
-    protected Method getMethod(final String name, List<Method> methods) {
-        for (Method cur : methods) {
+    protected MethodOrDecl getMethod(final String name, List<MethodOrDecl> methods) {
+        for (MethodOrDecl cur : methods) {
             if (cur.getName().equals(name)) {
                 return cur;
             }

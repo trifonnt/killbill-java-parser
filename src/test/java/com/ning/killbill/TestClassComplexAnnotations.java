@@ -1,7 +1,7 @@
 package com.ning.killbill;
 
 import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Method;
+import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class TestClassComplexAnnotations extends TestBase {
         assertEquals(testClass.getAnnotations().get(1).getName(), "Path");
         assertEquals(testClass.getAnnotations().get(1).getValue(), "JaxrsResource.ACCOUNTS_PATH");
 
-        Method mGetAccount = getMethod("getAccount", testClass.getMethods());
+        MethodOrDecl mGetAccount = getMethod("getAccount", testClass.getMethodOrDecls());
         assertNotNull(mGetAccount);
         assertEquals(mGetAccount.getAnnotations().size(), 3);
 
