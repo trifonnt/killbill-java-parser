@@ -88,7 +88,6 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
     }
 
 
-
     private void generateAPISignature(ClassEnumOrInterface cur, final MethodOrDecl method, final String pathPrefix, final String verb, final Writer w) throws IOException, GeneratorException {
 
         final Annotation methodPathAnnotation = getPathAnnotation(method.getAnnotations());
@@ -158,7 +157,6 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
     }
 
 
-
     //
     // TODO those methods should be moved up; already exists somewhere else
     //
@@ -195,16 +193,15 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         throw new GeneratorException("Could not find a JsonProperty annotation for object " + obj.getName() + " and field " + f.getName());
     }
 
-    private String resolvePath(final ClassEnumOrInterface cur, final String pathAnnotation,  final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
+    private String resolvePath(final ClassEnumOrInterface cur, final String pathAnnotation, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
 
-        final StringBuilder tmp  = new StringBuilder();
-        final String [] parts = pathAnnotation.split("/");
+        final StringBuilder tmp = new StringBuilder();
+        final String[] parts = pathAnnotation.split("/");
         for (int i = 0; i < parts.length; i++) {
-            if (i > 0) {
-                tmp.append("/");
-            }
+
             Matcher m = PATTERN_ID.matcher(parts[i]);
             if (m.matches()) {
+                tmp.append("/");
                 tmp.append("{");
                 tmp.append(m.group(1));
                 tmp.append("}");
@@ -212,8 +209,8 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
             }
             m = PATTERN_PATH.matcher(parts[i]);
             if (m.matches()) {
-                final StringBuilder tmp2  = new StringBuilder();
-                resolveDeclaratorrecursively(cur,  m.group(1), allClasses, tmp2);
+                final StringBuilder tmp2 = new StringBuilder();
+                resolveDeclaratorRecursively(cur, m.group(1), allClasses, tmp2);
                 tmp.append(tmp2.toString());
                 continue;
             }
@@ -222,27 +219,27 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         return tmp.toString();
     }
 
-    private void resolveDeclaratorrecursively(final ClassEnumOrInterface cur, final String toBeResolved, final List<ClassEnumOrInterface> allClasses, final StringBuilder tmp) throws GeneratorException {
+    private void resolveDeclaratorRecursively(final ClassEnumOrInterface cur, final String toBeResolved, final List<ClassEnumOrInterface> allClasses, final StringBuilder tmp) throws GeneratorException {
+
         final String resolved = resolveDeclarator(cur, toBeResolved, allClasses);
-        final String [] partsSlash = resolved.split("/");
-        final String [] partsPlus = resolved.split("\\+");
+        final String[] partsSlash = resolved.split("/");
+        final String[] partsPlus = resolved.split("\\+");
         if (partsSlash.length == 1 && partsPlus.length == 1) {
+            if (resolved.length() > 0 && ! resolved.startsWith("/")) {
+                tmp.append("/");
+            }
             tmp.append(resolved);
             return;
         }
         boolean isSlash = (partsSlash.length > 1);
-        final String [] target = isSlash ? partsSlash : partsPlus;
+        final String[] target = isSlash ? partsSlash : partsPlus;
         for (String p : target) {
             Matcher m = PATTERN_PATH.matcher(p);
             if (!m.matches()) {
-                //throw new GeneratorException("Hum path " + toBeResolved + " for class " + cur.getName()+ " does not match pattern");
                 continue;
             }
-            if (isSlash) {
-                tmp.append("/");
-            }
 
-            resolveDeclaratorrecursively(cur, m.group(1), allClasses, tmp);
+            resolveDeclaratorRecursively(cur, m.group(1), allClasses, tmp);
         }
     }
 
