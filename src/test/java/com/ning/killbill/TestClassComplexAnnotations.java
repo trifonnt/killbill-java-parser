@@ -37,7 +37,7 @@ public class TestClassComplexAnnotations extends TestBase {
         assertNull(mGetAccount.getAnnotations().get(0).getValue());
 
         assertEquals(mGetAccount.getAnnotations().get(1).getName(), "Path");
-        //assertEquals(mGetAccount.getAnnotations().get(1).getValue(), "/{accountId:\"UUID_PATTERN\"}");
+        assertEquals(mGetAccount.getAnnotations().get(1).getValue(), "/{accountId:+UUID_PATTERN+}");
         assertEquals(mGetAccount.getAnnotations().get(2).getName(), "Produces");
         assertEquals(mGetAccount.getAnnotations().get(2).getValue(), "APPLICATION_JSON");
     }

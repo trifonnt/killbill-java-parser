@@ -28,6 +28,7 @@ import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.MethodCtorOrDecl;
 import com.ning.killbill.objects.MethodOrDecl;
 import com.ning.killbill.objects.Type;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,7 @@ public class KillbillListener extends JavaBaseListener {
 
     private Annotation currentAnnotation;
     private StringBuffer elementValueForAnnotation;
+    private StringBuffer variableInitializerValue;
 
     private int curInMethodBodyLevel;
 
@@ -104,6 +106,7 @@ public class KillbillListener extends JavaBaseListener {
         this.packageName = null;
         this.currentAnnotation = null;
         this.elementValueForAnnotation = null;
+        this.variableInitializerValue = null;
         this.curInMethodBodyLevel = 0;
 
     }
@@ -357,14 +360,22 @@ public class KillbillListener extends JavaBaseListener {
 
     @Override
     public void enterVariableInitializer(JavaParser.VariableInitializerContext ctx) {
-        if (currentMethodCtorOrDecl != null && ctx.expression().primary() != null) {
-            final String value = stripQuoteFromValue(ctx.expression().primary().getText());
-            currentMethodCtorOrDecl.setInitializerValue(value);
+
+        if (currentMethodCtorOrDecl != null) {
+            variableInitializerValue = new StringBuffer();
+
+            buildValueForExpression(ctx.expression(), variableInitializerValue);
         }
     }
 
     @Override
     public void exitVariableInitializer(JavaParser.VariableInitializerContext ctx) {
+
+        if (variableInitializerValue != null && currentMethodCtorOrDecl != null) {
+            final String value = stripQuoteFromValue(variableInitializerValue.toString());
+            currentMethodCtorOrDecl.setInitializerValue(value);
+        }
+        variableInitializerValue = null;
     }
 
 
@@ -768,6 +779,7 @@ public class KillbillListener extends JavaBaseListener {
     public void enterElementValue(JavaParser.ElementValueContext ctx) {
         if (currentAnnotation != null) {
             elementValueForAnnotation = new StringBuffer();
+            buildValueForExpression(ctx.expression(), elementValueForAnnotation);
             return;
         }
     }
@@ -776,54 +788,28 @@ public class KillbillListener extends JavaBaseListener {
     public void exitElementValue(JavaParser.ElementValueContext ctx) {
     }
 
-    @Override
-    public void enterExpression(JavaParser.ExpressionContext ctx) {
 
-    }
 
-    @Override
-    public void exitExpression(JavaParser.ExpressionContext ctx) {
-        if (elementValueForAnnotation != null) {
-            for (int i = 0; i < ctx.getChildCount(); i++) {
-                if (!(ctx.getChild(i) instanceof JavaParser.ExpressionContext)) {
-                    final String value;
-
-                    if (ctx.getChild(i) instanceof JavaParser.PrimaryContext) {
-                        value = ((JavaParser.PrimaryContext) ctx.getChild(i)).getText();
-                    } else {
-                        value = ctx.getChild(i).getText();
-                    }
-                    elementValueForAnnotation.append(stripQuoteFromValue(value));
+    private void buildValueForExpression(final JavaParser.ExpressionContext expression, final StringBuffer tmp) {
+        if (expression.primary() != null) {
+            final String text = expression.primary().literal() != null ? expression.primary().literal().getText() : expression.primary().getText();
+            tmp.append(stripQuoteFromValue(text));
+        } else {
+            for (int i = 0; i < expression.getChildCount(); i++) {
+                final ParseTree child = expression.getChild(i);
+                if (child instanceof JavaParser.ExpressionContext) {
+                    buildValueForExpression((JavaParser.ExpressionContext) child, tmp);
+                } else {
+                    tmp.append(stripQuoteFromValue(child.getText()));
                 }
             }
-            return;
         }
-
     }
-
-
-
 
     /*
     *
     * ************************************************ HELPERS *********************************************
     */
-
-    private void buildValueForExpression(final JavaParser.ExpressionContext expression, final List<String> valueParts) {
-        if (expression.primary() != null) {
-            final String text = expression.primary().literal() != null ? expression.primary().literal().getText() : expression.primary().getText();
-            valueParts.add(text);
-        } else if (expression.primary() == null && expression.expression() == null) {
-            final String text = expression.getText();
-            valueParts.add(text);
-        } else {
-            final List<JavaParser.ExpressionContext> contexts = expression.expression();
-            for (JavaParser.ExpressionContext cur : contexts) {
-                buildValueForExpression(cur, valueParts);
-            }
-        }
-    }
-
 
     private String stripQuoteFromValue(final String value) {
         if (value != null && value.startsWith("\"") && (value.endsWith("\""))) {

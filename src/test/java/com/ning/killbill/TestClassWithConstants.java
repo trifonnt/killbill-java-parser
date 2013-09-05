@@ -21,14 +21,29 @@ public class TestClassWithConstants extends TestBase {
 
         final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         final List<MethodOrDecl> methodOrDecls = testClass.getMethodOrDecls();
-        assertEquals(methodOrDecls.size(), 3);
+        assertEquals(methodOrDecls.size(), 7);
+
 
         assertEquals(methodOrDecls.get(0).getName(), "API_PREFIX");
-        assertEquals(methodOrDecls.get(0).getInitializerValue(), "boo");
-        assertEquals(methodOrDecls.get(1).getName(), "API_PREFIX2");
-        assertEquals(methodOrDecls.get(1).getInitializerValue(), "grrrrrr");
-        assertEquals(methodOrDecls.get(2).getName(), "methodFoo");
-        assertNull(methodOrDecls.get(2).getInitializerValue());
+        assertEquals(methodOrDecls.get(0).getInitializerValue(), "");
+
+        assertEquals(methodOrDecls.get(1).getName(), "API_VERSION");
+        assertEquals(methodOrDecls.get(1).getInitializerValue(), "/1.0");
+
+        assertEquals(methodOrDecls.get(2).getName(), "API_POSTFIX");
+        assertEquals(methodOrDecls.get(2).getInitializerValue(), "/kb");
+
+        assertEquals(methodOrDecls.get(3).getName(), "PREFIX");
+        assertEquals(methodOrDecls.get(3).getInitializerValue(), "API_PREFIX+API_VERSION+API_POSTFIX");
+
+        assertEquals(methodOrDecls.get(4).getName(), "SECURITY");
+        assertEquals(methodOrDecls.get(4).getInitializerValue(), "security");
+
+        assertEquals(methodOrDecls.get(5).getName(), "SECURITY_PATH");
+        assertEquals(methodOrDecls.get(5).getInitializerValue(), "API_PREFIX+/+API_PREFIX2");
+
+        assertEquals(methodOrDecls.get(6).getName(), "methodFoo");
+        assertNull(methodOrDecls.get(6).getInitializerValue());
 
     }
 

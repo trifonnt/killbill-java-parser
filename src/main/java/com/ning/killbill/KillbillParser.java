@@ -22,7 +22,7 @@ public class KillbillParser {
 
     private final static String RESOURCE_DEBUG_FILE = "/Users/stephanebrossier/Work/Src/Killbill/killbill-java-parser/src/test/resources/ClassWithConstants";
 
-    private final static boolean DEBUG_MODE = true;
+    private final static boolean DEBUG_MODE = false;
 
 
     public static void main(String[] args) throws Exception {
