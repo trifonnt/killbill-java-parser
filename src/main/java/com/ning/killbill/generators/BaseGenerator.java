@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.jruby.javasupport.JavaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,11 @@ public class BaseGenerator {
 
     public BaseGenerator() {
         this.allClasses = new LinkedList<ClassEnumOrInterface>();
+    }
+
+    protected static final String camelToUnderscore(final String input) {
+        //return UPPER_CAMEL.to(LOWER_UNDERSCORE, input);
+        return JavaUtil.getRubyCasedName(input);
     }
 
     protected void parseAll(KillbillParserArgs args, List<URI> input) throws IOException, GeneratorException {

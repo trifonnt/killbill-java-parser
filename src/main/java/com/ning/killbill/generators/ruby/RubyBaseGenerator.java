@@ -136,12 +136,6 @@ public abstract class RubyBaseGenerator extends BaseGenerator implements Generat
     }
 
 
-    protected static final String camelToUnderscore(final String input) {
-        //return UPPER_CAMEL.to(LOWER_UNDERSCORE, input);
-        return JavaUtil.getRubyCasedName(input);
-    }
-
-
     protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
 
     protected abstract void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException;

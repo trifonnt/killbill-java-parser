@@ -37,5 +37,11 @@ public class TestJerseyDocGenerator {
         Assert.assertEquals(m.group(1), "API_VERSION");
     }
 
+    @Test(groups= "fast")
+    public void testCreateDescriptionFromMethodName() {
+        String result  =JerseyDocGenerator.createDescriptionFromMethodName("deleteCredit");
+        Assert.assertEquals(result, "Delete credit");
+    }
+
 
 }

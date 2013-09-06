@@ -2,6 +2,7 @@ package com.ning.killbill.generators.doc;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
 import com.ning.killbill.generators.BaseGenerator;
 import com.ning.killbill.generators.Generator;
@@ -19,6 +20,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,7 +56,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
                     if (!containsPathAnnotation(annotations)) {
                         continue;
                     }
-                    generateClass(cur, allClasses, w);
+                    generateAsciiDoctorClass(cur, allClasses, w);
                     allGeneratedClasses.add(cur);
                 }
             } finally {
@@ -66,59 +68,167 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
     }
 
     private File createDocFile(File outputDir) throws IOException {
-        final File doc = new File(outputDir, "jersey.doc");
+        final File doc = new File(outputDir, "rest.adoc");
         doc.createNewFile();
         return doc;
     }
 
-    private void generateClass(ClassEnumOrInterface cur, List<ClassEnumOrInterface> allClasses, Writer writer) throws IOException, GeneratorException {
-        writer.write("****************************** " + cur.getName() + " ******************************\n");
-        final List<Annotation> classAnnotations = cur.getAnnotations();
-        final Annotation classPathAnnotation = getPathAnnotation(classAnnotations);
-        final String pathPrefix = classPathAnnotation.getValue();
+    private void generateAsciiDoctorClass(ClassEnumOrInterface cur, List<ClassEnumOrInterface> allClasses, Writer writer) throws IOException, GeneratorException {
 
+        final List<MethodOrDecl> candidates = new LinkedList<MethodOrDecl>();
         for (MethodOrDecl m : cur.getMethodOrDecls()) {
             Annotation httpVerbAnnotation = getHttpMethodAnnotation(m.getAnnotations());
             if (httpVerbAnnotation == null) {
                 continue;
             }
-            generateAPISignature(cur, m, pathPrefix, httpVerbAnnotation.getName(), writer);
-            generateJsonIfRequired(m, allClasses, httpVerbAnnotation.getName(), writer);
+            candidates.add(m);
         }
+        if (candidates.size() == 0) {
+            return;
+        }
+
+        generateAsciiDoctorResourceTitle(cur.getName(), writer);
+
+        final List<Annotation> classAnnotations = cur.getAnnotations();
+        final Annotation classPathAnnotation = getPathAnnotation(classAnnotations);
+        final String pathPrefix = classPathAnnotation.getValue();
+
+        generateAsciiDoctorAPIHeader(writer);
+
+        generateAsciiDoctorTableMarker(writer);
+        generateAsciiDoctorTableHeaders(ImmutableList.<String>of("HTTP VERB", "URI", "Description"), writer);
+        final List<Field> jsonFields = new LinkedList<Field>();
+        for (MethodOrDecl m : candidates) {
+            Annotation httpVerbAnnotation = getHttpMethodAnnotation(m.getAnnotations());
+            generateAsciiDoctorAPIResource(cur, m, pathPrefix, httpVerbAnnotation.getName(), writer);
+            final Field jsonField = getJsonFieldIfExists(m, httpVerbAnnotation.getName());
+            if (jsonField != null) {
+                jsonFields.add(jsonField);
+            }
+        }
+        generateAsciiDoctorTableMarker(writer);
+
+
+
+        for (Field f : jsonFields) {
+            final String [] parts = f.getType().getBaseType().split("\\.");
+
+            generateAsciiDoctorJsonHeader(parts[parts.length - 1], writer);
+
+            generateAsciiDoctorTableMarker(writer);
+            generateAsciiDoctorTableHeaders(ImmutableList.<String>of("Attribute", "Required", "Comments"), writer);
+
+            generateAsciiDoctorJsonTable(f, allClasses, writer);
+
+            generateAsciiDoctorTableMarker(writer);
+
+        }
+
+        writer.flush();
+    }
+
+    private void generateAsciiDoctorResourceTitle(final String resourceName, final Writer w) throws IOException {
+        w.write("==== " + resourceName + "\n");
+        w.write("\n");
+    }
+
+    private void generateAsciiDoctorAPIHeader(final Writer w) throws IOException {
+        w.write("=====  APIs" + "\n");
+        w.write("\n");
+    }
+
+    private void generateAsciiDoctorJsonHeader(final String resourceName, final Writer w) throws IOException {
+        w.write("===== Json fields " + resourceName + "\n");
+        w.write("\n");
+    }
+
+    private void generateAsciiDoctorTableMarker(final Writer w) throws IOException {
+        w.write("|===" + "\n");
+    }
+
+    private void generateAsciiDoctorTableHeaders(final List<String> headers, final Writer w) throws IOException {
+        for (int i = 0; i < headers.size(); i++) {
+            w.write("|");
+            w.write(headers.get(i));
+            w.write(" ");
+        }
+        w.write("\n");
+        w.write("\n");
+    }
+
+    private void generateAsciiDoctorTableEntry(final List<String> entries, final Writer w) throws IOException {
+        for (int i = 0; i < entries.size(); i++) {
+            w.write("|");
+            w.write(entries.get(i));
+            w.write("\n");
+        }
+        w.write("\n");
+        w.write("\n");
     }
 
 
-    private void generateAPISignature(ClassEnumOrInterface cur, final MethodOrDecl method, final String pathPrefix, final String verb, final Writer w) throws IOException, GeneratorException {
+    private void generateAsciiDoctorAPIResource(ClassEnumOrInterface cur, final MethodOrDecl method, final String pathPrefix, final String verb, final Writer w) throws IOException, GeneratorException {
 
         final Annotation methodPathAnnotation = getPathAnnotation(method.getAnnotations());
         final String path = pathPrefix +
                 (methodPathAnnotation != null ? methodPathAnnotation.getValue() : "");
         final String resolvedPath = resolvePath(cur, path, allClasses);
-        w.write(verb);
-        w.write(" ");
-        w.write(resolvedPath);
-        w.write("\n");
-        w.write("\n");
-        w.flush();
+        final List<String> entries = ImmutableList.<String>builder()
+                .add(verb)
+                .add("+++" + resolvedPath + "+++")
+                .add(createDescriptionFromMethodName(method.getName()))
+                .build();
+
+        generateAsciiDoctorTableEntry(entries, w);
     }
 
-    private void generateJsonIfRequired(final MethodOrDecl method, List<ClassEnumOrInterface> allClasses, final String verb, final Writer w) throws IOException, GeneratorException {
+
+    private void generateAsciiDoctorJsonTable(final Field firstArgument, List<ClassEnumOrInterface> allClasses, final Writer w) throws IOException, GeneratorException {
+        if (firstArgument == null) return;
+        final ClassEnumOrInterface jsonClass = findClassEnumOrInterface(firstArgument.getType().getBaseType(), allClasses);
+        final Constructor ctor = getJsonCreatorCTOR(jsonClass);
+
+        final ImmutableList.Builder builder = ImmutableList.<String>builder();
+
+        for (Field f : ctor.getOrderedArguments()) {
+            final String attribute = getJsonPropertyAnnotationValue(jsonClass, f);
+            builder.add(attribute);
+            builder.add("true");
+            builder.add("-");
+        }
+
+        generateAsciiDoctorTableEntry(builder.build(), w);
+
+    }
+
+
+    static String createDescriptionFromMethodName(final String methodName) {
+        final String underscoreString = camelToUnderscore(methodName);
+        final String[] parts = underscoreString.split("_");
+        final StringBuffer tmp = new StringBuffer();
+        boolean first = true;
+        for (String cur : parts) {
+            if (first) {
+                tmp.append(Character.toUpperCase(cur.charAt(0)))
+                        .append(cur.substring(1));
+                first = false;
+            } else {
+                tmp.append(" ");
+                tmp.append(cur);
+            }
+        }
+        return tmp.toString();
+    }
+
+    private Field getJsonFieldIfExists(MethodOrDecl method, String verb) {
         final List<Field> arguments = method.getOrderedArguments();
         final Field firstArgument = arguments.size() >= 1 ? arguments.get(0) : null;
         if (verb.equals("GET") ||
                 firstArgument == null ||
                 firstArgument.getAnnotations().size() != 0) {
-            return;
+            return null;
         }
-        final ClassEnumOrInterface jsonClass = findClassEnumOrInterface(firstArgument.getType().getBaseType(), allClasses);
-        final Constructor ctor = getJsonCreatorCTOR(jsonClass);
-
-        w.write("--------  Json Body:  --------\n");
-        for (Field f : ctor.getOrderedArguments()) {
-            final String attribute = getJsonPropertyAnnotationValue(jsonClass, f);
-            w.write("\t" + attribute + "\n");
-        }
-        w.flush();
+        return firstArgument;
     }
 
     private boolean containsPathAnnotation(final List<Annotation> annotations) {
@@ -225,7 +335,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         final String[] partsSlash = resolved.split("/");
         final String[] partsPlus = resolved.split("\\+");
         if (partsSlash.length == 1 && partsPlus.length == 1) {
-            if (resolved.length() > 0 && ! resolved.startsWith("/")) {
+            if (resolved.length() > 0 && !resolved.startsWith("/")) {
                 tmp.append("/");
             }
             tmp.append(resolved);
