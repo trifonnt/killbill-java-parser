@@ -1,5 +1,6 @@
 package com.ning.killbill.generators.doc;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -20,8 +21,10 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,11 +99,13 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         generateAsciiDoctorAPIHeader(writer);
 
         generateAsciiDoctorTableMarker(writer);
-        generateAsciiDoctorTableHeaders(ImmutableList.<String>of("HTTP VERB", "URI", "Description"), writer);
-        final List<Field> jsonFields = new LinkedList<Field>();
+        generateAsciiDoctorTableHeaders(ImmutableList.<String>of("HTTP VERB", "URI", "Query Parameters", "Description"), writer);
+        final Set<Field> jsonFields = new HashSet<Field>();
         for (MethodOrDecl m : candidates) {
+
+            final String queryParams = extractQueryParametersFromMethod(cur, m, allClasses);
             Annotation httpVerbAnnotation = getHttpMethodAnnotation(m.getAnnotations());
-            generateAsciiDoctorAPIResource(cur, m, pathPrefix, httpVerbAnnotation.getName(), writer);
+            generateAsciiDoctorAPIResource(cur, m, pathPrefix, httpVerbAnnotation.getName(), queryParams, writer);
             final Field jsonField = getJsonFieldIfExists(m, httpVerbAnnotation.getName());
             if (jsonField != null) {
                 jsonFields.add(jsonField);
@@ -125,6 +130,26 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         }
 
         writer.flush();
+    }
+
+
+    private String extractQueryParametersFromMethod(final ClassEnumOrInterface claz, final MethodOrDecl m, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
+
+        final List<String> queryParams = new LinkedList<String>();
+        for (Field cur : m.getOrderedArguments()) {
+            if (cur.getAnnotations() != null) {
+                for (Annotation a : cur.getAnnotations()) {
+                    if (a.getName().equals("QueryParam")) {
+                        final String value = a.getValue();
+                        final String resolved  = resolveDeclarator(claz, value, allClasses);
+                        queryParams.add(resolved);
+                        break;
+                    }
+                }
+            }
+        }
+        Joiner join = Joiner.on(", ");
+        return queryParams.size() > 0 ?  join.join(queryParams) : "-";
     }
 
     private void generateAsciiDoctorResourceTitle(final String resourceName, final Writer w) throws IOException {
@@ -167,7 +192,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
     }
 
 
-    private void generateAsciiDoctorAPIResource(ClassEnumOrInterface cur, final MethodOrDecl method, final String pathPrefix, final String verb, final Writer w) throws IOException, GeneratorException {
+    private void generateAsciiDoctorAPIResource(ClassEnumOrInterface cur, final MethodOrDecl method, final String pathPrefix, final String verb, final String queryParams, final Writer w) throws IOException, GeneratorException {
 
         final Annotation methodPathAnnotation = getPathAnnotation(method.getAnnotations());
         final String path = pathPrefix +
@@ -176,6 +201,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         final List<String> entries = ImmutableList.<String>builder()
                 .add(verb)
                 .add("+++" + resolvedPath + "+++")
+                .add(queryParams)
                 .add(createDescriptionFromMethodName(method.getName()))
                 .build();
 
