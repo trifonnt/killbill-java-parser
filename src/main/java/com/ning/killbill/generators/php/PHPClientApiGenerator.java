@@ -72,19 +72,23 @@ public class PHPClientApiGenerator extends ClientLibraryBaseGenerator implements
         try {
             w = new FileWriter(output, true);
 
+            writeWithIndentationAndNewLine("<?php", w, 0);
+
+            writeWithIndentationAndNewLine("require_once(dirname(__FILE__) . '/../resource.php');", w, 0);
+
             writeHeader(w);
 
             final String baseClass = DEFAULT_BASE_CLASS;
-            writeWithIndentationAndNewLine("class " + createClassName(obj.getName()) + " < " + baseClass + " {", w, 0);
+            writeWithIndentationAndNewLine("class " + createClassName(obj.getName()) + " extends " + baseClass + " {", w, 0);
             final Constructor ctor = getJsonCreatorCTOR(obj);
             boolean first = true;
             for (Field f : ctor.getOrderedArguments()) {
                 final String attribute = getJsonPropertyAnnotationValue(obj, f);
                 if (first) {
                     first = false;
-                    writeWithIndentationAndNewLine("protected $" + attribute, w, INDENT_LEVEL);
+                    writeWithIndentationAndNewLine("protected $" + attribute + ";", w, INDENT_LEVEL);
                 } else {
-                    writeWithIndentationAndNewLine("protected $" + attribute, w, 0);
+                    writeWithIndentationAndNewLine("protected $" + attribute + ";", w, 0);
                 }
             }
             writeWithIndentationAndNewLine("}", w, -INDENT_LEVEL);
