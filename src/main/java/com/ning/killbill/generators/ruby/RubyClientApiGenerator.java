@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.util.List;
 
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
+import com.ning.killbill.generators.ClientLibraryBaseGenerator;
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.Annotation;
 import com.ning.killbill.objects.ClassEnumOrInterface;
@@ -109,29 +110,5 @@ public class RubyClientApiGenerator extends RubyBaseGenerator {
 
     private static String createClassName(final String objName) {
         return objName.replace("Json", "Attributes");
-    }
-
-    private String getJsonPropertyAnnotationValue(final ClassEnumOrInterface obj, final Field f) throws GeneratorException {
-        for (Annotation a : f.getAnnotations()) {
-            if ("JsonProperty".equals(a.getName())) {
-                return a.getValue();
-            }
-        }
-        throw new GeneratorException("Could not find a JsonProperty annotation for object " + obj.getName() + " and field " + f.getName());
-    }
-
-    private Constructor getJsonCreatorCTOR(final ClassEnumOrInterface obj) throws GeneratorException {
-        final List<Constructor> ctors = obj.getCtors();
-        for (Constructor cur : ctors) {
-            if (cur.getAnnotations() == null || cur.getAnnotations().size() == 0) {
-                continue;
-            }
-            for (final Annotation a : cur.getAnnotations()) {
-                if ("JsonCreator".equals(a.getName())) {
-                    return cur;
-                }
-            }
-        }
-        throw new GeneratorException("Could not find a CTOR for " + obj.getName() + " with a JsonCreator annotation");
     }
 }

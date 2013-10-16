@@ -2,6 +2,7 @@ package com.ning.killbill.generators;
 
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
 import com.ning.killbill.generators.doc.JerseyDocGenerator;
+import com.ning.killbill.generators.php.PHPClientApiGenerator;
 import com.ning.killbill.generators.ruby.JRubyPluginGenerator;
 import com.ning.killbill.generators.ruby.RubyClientApiGenerator;
 
@@ -21,7 +22,7 @@ public class DistpatchGenerator {
                 gen = new JRubyPluginGenerator();
                 break;
             case PHP_CLIENT_API:
-                gen = null;
+                gen = new PHPClientApiGenerator();
                 break;
             case JERSEY_DOC:
                 gen = new JerseyDocGenerator();

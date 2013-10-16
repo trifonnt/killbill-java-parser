@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
+import com.ning.killbill.generators.ClientLibraryBaseGenerator;
 import com.ning.killbill.generators.GeneratorException;
 import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.Field;
@@ -666,14 +667,5 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         final ClassEnumOrInterface superClass = findClassEnumOrInterface(superBaseClass, allClasses);
         result.addAll(superClass.getMethodOrDecls());
         getMethodsFromExtendedClasses(superClass, allClasses, result);
-    }
-
-    private ClassEnumOrInterface findClassEnumOrInterface(final String fullyQualifiedName, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
-        for (final ClassEnumOrInterface cur : allClasses) {
-            if (cur.getFullName().equals(fullyQualifiedName)) {
-                return cur;
-            }
-        }
-        throw new GeneratorException("Cannot find classEnumOrInterface " + fullyQualifiedName);
     }
 }

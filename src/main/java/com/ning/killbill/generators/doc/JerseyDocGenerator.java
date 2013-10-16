@@ -33,6 +33,8 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
     static final Pattern PATTERN_ID = Pattern.compile("\\{(\\w+).*\\}(?:\\+)*");
     static final Pattern PATTERN_PATH = Pattern.compile("(?:JaxrsResource\\.){0,1}(?:\\+){0,1}((?:\\w|_|1|\\.|0)+)(?:\\+){0,1}");
 
+
+
     @Override
     public void generate(KillbillParserArgs args) throws GeneratorException {
 
@@ -292,42 +294,6 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
         return filtered.iterator().hasNext() ? filtered.iterator().next() : null;
     }
 
-
-    //
-    // TODO those methods should be moved up; already exists somewhere else
-    //
-    private ClassEnumOrInterface findClassEnumOrInterface(final String fullyQualifiedName, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
-        for (final ClassEnumOrInterface cur : allClasses) {
-            if (cur.getFullName().equals(fullyQualifiedName)) {
-                return cur;
-            }
-        }
-        throw new GeneratorException("Cannot find classEnumOrInterface " + fullyQualifiedName);
-    }
-
-    private Constructor getJsonCreatorCTOR(final ClassEnumOrInterface obj) throws GeneratorException {
-        final List<Constructor> ctors = obj.getCtors();
-        for (Constructor cur : ctors) {
-            if (cur.getAnnotations() == null || cur.getAnnotations().size() == 0) {
-                continue;
-            }
-            for (final Annotation a : cur.getAnnotations()) {
-                if ("JsonCreator".equals(a.getName())) {
-                    return cur;
-                }
-            }
-        }
-        throw new GeneratorException("Could not find a CTOR for " + obj.getName() + " with a JsonCreator annotation");
-    }
-
-    private String getJsonPropertyAnnotationValue(final ClassEnumOrInterface obj, final Field f) throws GeneratorException {
-        for (Annotation a : f.getAnnotations()) {
-            if ("JsonProperty".equals(a.getName())) {
-                return a.getValue();
-            }
-        }
-        throw new GeneratorException("Could not find a JsonProperty annotation for object " + obj.getName() + " and field " + f.getName());
-    }
 
     private String resolvePath(final ClassEnumOrInterface cur, final String pathAnnotation, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
 

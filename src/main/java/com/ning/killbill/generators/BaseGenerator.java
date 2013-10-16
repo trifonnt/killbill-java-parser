@@ -6,8 +6,11 @@ import com.ning.killbill.JavaLexer;
 import com.ning.killbill.JavaParser;
 import com.ning.killbill.KillbillListener;
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs;
-import com.ning.killbill.generators.ruby.RubyBaseGenerator;
+import com.ning.killbill.objects.Annotation;
 import com.ning.killbill.objects.ClassEnumOrInterface;
+import com.ning.killbill.objects.Constructor;
+import com.ning.killbill.objects.Field;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -29,14 +32,17 @@ import java.util.List;
 public class BaseGenerator {
 
     protected final List<ClassEnumOrInterface> allClasses;
-    protected Logger log = LoggerFactory.getLogger(RubyBaseGenerator.class);
+    protected Logger log = LoggerFactory.getLogger(ClientLibraryBaseGenerator.class);
 
     public BaseGenerator() {
         this.allClasses = new LinkedList<ClassEnumOrInterface>();
     }
 
     protected static final String camelToUnderscore(final String input) {
-        //return UPPER_CAMEL.to(LOWER_UNDERSCORE, input);
+        return JavaUtil.getRubyCasedName(input);
+    }
+
+    protected static final String underscoreToCamel(final String input) {
         return JavaUtil.getRubyCasedName(input);
     }
 
@@ -50,6 +56,41 @@ public class BaseGenerator {
                 throw new GeneratorException("Not yet supported scheme: " + cur.getScheme());
             }
         }
+    }
+
+    protected ClassEnumOrInterface findClassEnumOrInterface(final String fullyQualifiedName, final List<ClassEnumOrInterface> allClasses) throws GeneratorException {
+        for (final ClassEnumOrInterface cur : allClasses) {
+            if (cur.getFullName().equals(fullyQualifiedName)) {
+                return cur;
+            }
+        }
+        throw new GeneratorException("Cannot find classEnumOrInterface " + fullyQualifiedName);
+    }
+
+
+
+    protected String getJsonPropertyAnnotationValue(final ClassEnumOrInterface obj, final Field f) throws GeneratorException {
+        for (Annotation a : f.getAnnotations()) {
+            if ("JsonProperty".equals(a.getName())) {
+                return a.getValue();
+            }
+        }
+        throw new GeneratorException("Could not find a JsonProperty annotation for object " + obj.getName() + " and field " + f.getName());
+    }
+
+    protected Constructor getJsonCreatorCTOR(final ClassEnumOrInterface obj) throws GeneratorException {
+        final List<Constructor> ctors = obj.getCtors();
+        for (Constructor cur : ctors) {
+            if (cur.getAnnotations() == null || cur.getAnnotations().size() == 0) {
+                continue;
+            }
+            for (final Annotation a : cur.getAnnotations()) {
+                if ("JsonCreator".equals(a.getName())) {
+                    return cur;
+                }
+            }
+        }
+        throw new GeneratorException("Could not find a CTOR for " + obj.getName() + " with a JsonCreator annotation");
     }
 
     private void generateFromFile(final File input, final File outputDir) throws IOException {
