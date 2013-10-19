@@ -71,9 +71,7 @@ public class PHPClientApiGenerator extends ClientLibraryBaseGenerator implements
         Writer w = null;
         try {
             w = new FileWriter(output, true);
-
-            writeWithIndentationAndNewLine("<?php", w, 0);
-
+            
             writeWithIndentationAndNewLine("require_once(dirname(__FILE__) . '/../resource.php');", w, 0);
 
             writeHeader(w);
