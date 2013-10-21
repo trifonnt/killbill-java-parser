@@ -791,6 +791,9 @@ public class KillbillListener extends JavaBaseListener {
 
 
     private void buildValueForExpression(final JavaParser.ExpressionContext expression, final StringBuffer tmp) {
+        if (expression == null) {
+            return;
+        }
         if (expression.primary() != null) {
             final String text = expression.primary().literal() != null ? expression.primary().literal().getText() : expression.primary().getText();
             tmp.append(stripQuoteFromValue(text));

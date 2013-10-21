@@ -2,7 +2,7 @@ package com.ning.killbill.objects;
 
 import java.util.List;
 
-public final class MethodOrDecl extends MethodCtorOrDecl {
+public class MethodOrDecl extends MethodCtorOrDecl {
 
     private final Type returnValueType;
 

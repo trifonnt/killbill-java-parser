@@ -1,5 +1,16 @@
 package com.ning.killbill.generators.ruby;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.ning.killbill.KillbillListener;
+import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
+import com.ning.killbill.generators.GeneratorException;
+import com.ning.killbill.objects.Annotation;
+import com.ning.killbill.objects.ClassEnumOrInterface;
+import com.ning.killbill.objects.Field;
+import com.ning.killbill.objects.MethodOrDecl;
+import com.ning.killbill.objects.Type;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -10,16 +21,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
-
-import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
-import com.ning.killbill.generators.ClientLibraryBaseGenerator;
-import com.ning.killbill.generators.GeneratorException;
-import com.ning.killbill.objects.ClassEnumOrInterface;
-import com.ning.killbill.objects.Field;
-import com.ning.killbill.objects.MethodOrDecl;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 
 public class JRubyPluginGenerator extends RubyBaseGenerator {
 
@@ -191,11 +192,11 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
 
         writeWithIndentationAndNewLine("rescue Exception => e", w, -INDENT_LEVEL);
-        writeWithIndentationAndNewLine("message = \"Failure in " + methodName + ": #{e}\"", w, + INDENT_LEVEL);
-        writeWithIndentationAndNewLine("unless e.backtrace.nil?", w, + 0);
-        writeWithIndentationAndNewLine("message = \"#{message}\\n#{e.backtrace.join(\"\\n\")}\"", w, + INDENT_LEVEL);
-        writeWithIndentationAndNewLine("end", w, + -INDENT_LEVEL);
-        writeWithIndentationAndNewLine("logger.warn message" , w, + 0);
+        writeWithIndentationAndNewLine("message = \"Failure in " + methodName + ": #{e}\"", w, +INDENT_LEVEL);
+        writeWithIndentationAndNewLine("unless e.backtrace.nil?", w, +0);
+        writeWithIndentationAndNewLine("message = \"#{message}\\n#{e.backtrace.join(\"\\n\")}\"", w, +INDENT_LEVEL);
+        writeWithIndentationAndNewLine("end", w, +-INDENT_LEVEL);
+        writeWithIndentationAndNewLine("logger.warn message", w, +0);
         writeWithIndentationAndNewLine("raise Java::com.ning.billing.payment.plugin.api.PaymentPluginApiException.new(\"" + methodName + " failure\", e.message)", w, 0);
         writeWithIndentationAndNewLine("ensure", w, -INDENT_LEVEL);
         writeWithIndentationAndNewLine("@delegate_plugin.after_request", w, INDENT_LEVEL);
@@ -364,14 +365,14 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless " + memberPrefix + member + ".nil?", w, 0);
         } else {
             if ("java.lang.String".equals(returnValueType) ||
-                // TTO same thing as for to_java
-                "java.lang.Object".equals(returnValueType)) {
+                    // TTO same thing as for to_java
+                    "java.lang.Object".equals(returnValueType)) {
             } else if ("java.util.UUID".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".nil? ? nil : " + memberPrefix + member + ".to_s", w, 0);
             } else if ("java.math.BigDecimal".equals(returnValueType)) {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".nil? ? 0 : BigDecimal.new(" + memberPrefix + member + ".to_s)", w, 0);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
-                       "java.util.Date".equals(returnValueType)) {
+                    "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + memberPrefix + member + ".nil?", w, 0);
                 if ("java.util.Date".equals(returnValueType)) {
                     // First convert to DateTime
@@ -390,17 +391,17 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + "TZInfo::Timezone.get(" + memberPrefix + member + ".get_id)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("java.util.List".equals(returnValueType) ||
-                       "java.util.Collection".equals(returnValueType) ||
-                       "java.util.Set".equals(returnValueType) ||
-                       "java.util.Iterator".equals(returnValueType)) {
+                    "java.util.Collection".equals(returnValueType) ||
+                    "java.util.Set".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = []", w, 0);
                 writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                 writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
                 writeWithIndentationAndNewLine("tmp << m", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
+            } else if ("java.util.Iterator".equals(returnValueType)) {
+                // Leave default where ruby can call next, not ideal but we have no use case so far.
             } else {
-                // At this point if we can't find the class we throw
                 final ClassEnumOrInterface classEnumOrInterface = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrInterface.isEnum()) {
                     writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s.to_sym unless " + memberPrefix + member + ".nil?", w, 0);
@@ -410,6 +411,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             }
         }
     }
+
 
     private String getJrubyPoJo(final String pojoBaseName) throws GeneratorException {
         String[] parts = pojoBaseName.split("\\.");
@@ -496,9 +498,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless " + member + ".nil?", w, 0);
         } else {
             if ("java.lang.String".equals(returnValueType) ||
-                // TODO fix KB API really!
-                // We assume Object is a string in that case
-                "java.lang.Object".equals(returnValueType)) {
+                    // TODO fix KB API really!
+                    // We assume Object is a string in that case
+                    "java.lang.Object".equals(returnValueType)) {
                 // default jruby conversion should be fine
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s unless " + memberPrefix + member + ".nil?", w, 0);
             } else if ("java.util.UUID".equals(returnValueType)) {
@@ -511,7 +513,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = java.math.BigDecimal.new(" + memberPrefix + member + ".to_s)", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("org.joda.time.DateTime".equals(returnValueType) ||
-                       "java.util.Date".equals(returnValueType)) {
+                    "java.util.Date".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("if !" + memberPrefix + member + ".nil?", w, 0);
                 writeWithIndentationAndNewLine(memberPrefix + member + " =  (" + memberPrefix + member + ".kind_of? Time) ? DateTime.parse(" + memberPrefix + member + ".to_s) : " + memberPrefix + member, w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = Java::org.joda.time.DateTime.new(" + memberPrefix + member + ".to_s, Java::org.joda.time.DateTimeZone::UTC)", w, 0);
@@ -528,17 +530,17 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = Java::org.joda.time.DateTimeZone.forID((" + memberPrefix + member + ".respond_to?(:identifier) ? " + memberPrefix + member + ".identifier : " + memberPrefix + member + ".to_s))", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("java.util.List".equals(returnValueType) ||
-                       "java.util.Collection".equals(returnValueType) ||
-                       "java.util.Set".equals(returnValueType) ||
-                       "java.util.Iterator".equals(returnValueType)) {
+                    "java.util.Collection".equals(returnValueType) ||
+                    "java.util.Set".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = java.util.ArrayList.new", w, 0);
                 writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                 writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, "");
                 writeWithIndentationAndNewLine("tmp.add(m)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
+            } else if ("java.util.Iterator".equals(returnValueType)) {
+                writeWithIndentationAndNewLine(memberPrefix + member + " = EnumeratorIterator.new(" + memberPrefix + member + ")", w, 0);
             } else {
-                // At this point if we can't find the class we throw
                 final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrIfce.isEnum()) {
                     writeWithIndentationAndNewLine(memberPrefix + member + " = Java::" + classEnumOrIfce.getFullName() + ".value_of(\"#{" + memberPrefix + member + ".to_s}\") unless " + memberPrefix + member + ".nil?", w, 0);
@@ -587,10 +589,11 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         if (input.startsWith("get")) {
             return input.substring(3);
         } else if (input.startsWith("is")) {
-            //return input.substring(2);
+            return input;
+        } else {
+            // Some method ended there but don't seem to really be getters (e.g iterator), we just return them 'as is'
             return input;
         }
-        throw new GeneratorException("Unexpected getter method :" + input);
     }
 
     @Override
@@ -641,11 +644,12 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
     private void getMethodsFromExtendedInterfaces(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final List<MethodOrDecl> result) throws GeneratorException {
-        // Reverse list to match original algorithm from ruby parser
+// Reverse list to match original algorithm from ruby parser
         final List<String> superInterfaces = Lists.reverse(obj.getSuperInterfaces());
         for (final String cur : superInterfaces) {
             // Don't expect to find those in our packages
             if (cur.startsWith("java.lang")) {
+                addMissingMethodsFromJavaLang(cur, allClasses, result);
                 continue;
             }
 
@@ -667,5 +671,24 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         final ClassEnumOrInterface superClass = findClassEnumOrInterface(superBaseClass, allClasses);
         result.addAll(superClass.getMethodOrDecls());
         getMethodsFromExtendedClasses(superClass, allClasses, result);
+    }
+
+    //
+// Since we don't parse all java classes, we need to add the methods from the java.lang classes we care about.
+    private void addMissingMethodsFromJavaLang(final String javaLangBaseClass, final List<ClassEnumOrInterface> allClasses, final List<MethodOrDecl> result) throws GeneratorException {
+        if (javaLangBaseClass.equals("java.lang.Iterable")) {
+            final MethodOrDecl iteratorMethod = new JavaLanMethodOrDecl("iterator", new Type("java.util.Iterator", KillbillListener.UNDEFINED_GENERIC), true, null);
+            result.add(iteratorMethod);
+        }
+    }
+
+    private static class JavaLanMethodOrDecl extends MethodOrDecl {
+        public JavaLanMethodOrDecl(final String name, final Type returnValueType, final boolean isAbstract, final List<Annotation> annotations) {
+            super(name, returnValueType, isAbstract, annotations);
+        }
+
+        public boolean isGetter() {
+            return true;
+        }
     }
 }
