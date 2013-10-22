@@ -106,7 +106,7 @@ public class PHPClientApiGenerator extends ClientLibraryBaseGenerator implements
 
 
     @Override
-    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
     }
 
 

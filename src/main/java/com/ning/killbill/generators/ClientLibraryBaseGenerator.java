@@ -47,7 +47,7 @@ public abstract class ClientLibraryBaseGenerator extends BaseGenerator implement
 
         final List<ClassEnumOrInterface> allGeneratedClasses = new ArrayList<ClassEnumOrInterface>();
 
-        startGeneration(allClasses, args.getOutputDir());
+        startGeneration(allClasses, args.getOutputDir(), args.getMode());
 
         final List<URI> input = args.getInput();
         try {
@@ -121,7 +121,7 @@ public abstract class ClientLibraryBaseGenerator extends BaseGenerator implement
     }
 
 
-    protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException;
+    protected abstract void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException;
 
     protected abstract void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException;
 

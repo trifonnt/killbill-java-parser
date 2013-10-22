@@ -1,7 +1,9 @@
 package com.ning.killbill.generators.ruby;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
 import com.ning.killbill.KillbillListener;
 import com.ning.killbill.com.ning.killbill.args.KillbillParserArgs.GENERATOR_MODE;
 import com.ning.killbill.generators.GeneratorException;
@@ -13,9 +15,12 @@ import com.ning.killbill.objects.Type;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,15 +37,40 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     private final String[] POJO_MODULES = {"Killbill", "Plugin", "Model"};
     private final String[] API_MODULES = {"Killbill", "Plugin", "Api"};
 
+    private static final List<ClassEnumOrInterface> STATICALLY_API_GENERATED_CLASSES = ImmutableList.<ClassEnumOrInterface>builder()
+            .add(new ClassEnumOrInterface("EnumeratorIterator", ClassEnumOrInterface.ClassEnumOrInterfaceType.CLASS, null, null, false))
+            .build();
+
+    private final List<ClassEnumOrInterface> staticallyGeneratedClasses;
+
     public JRubyPluginGenerator() {
         super();
+        this.staticallyGeneratedClasses = new ArrayList<ClassEnumOrInterface>();
     }
 
-    @Override
-    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
 
+    private void generateStaticClass(final String className, final File outputDir) throws GeneratorException {
+
+        OutputStream out = null;
+        try {
+            final String resourceName = createFileName(className, true);
+            final URL classUrl = Resources.getResource(resourceName);
+
+            final File output = new File(outputDir, resourceName);
+
+            out = new FileOutputStream(output);
+            Resources.copy(classUrl, out);
+        } catch (IOException e) {
+            throw new GeneratorException("Failed to generate file " + className, e);
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
     }
-
 
     @Override
     protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
@@ -400,7 +430,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
             } else if ("java.util.Iterator".equals(returnValueType)) {
-                // Leave default where ruby can call next, not ideal but we have no use case so far.
+                // TODO
+                // Leave default where ruby can call next, not ideal because that would break pure ruby plugin code
             } else {
                 final ClassEnumOrInterface classEnumOrInterface = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrInterface.isEnum()) {
@@ -539,7 +570,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
             } else if ("java.util.Iterator".equals(returnValueType)) {
-                writeWithIndentationAndNewLine(memberPrefix + member + " = EnumeratorIterator.new(" + memberPrefix + member + ")", w, 0);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = Killbill::Plugin::Model::EnumeratorIterator.new(" + memberPrefix + member + ")", w, 0);
             } else {
                 final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                 if (classEnumOrIfce.isEnum()) {
@@ -619,7 +650,24 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     }
 
     @Override
+    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
+        switch (mode) {
+            case JRUBY_API:
+                staticallyGeneratedClasses.addAll(STATICALLY_API_GENERATED_CLASSES);
+                break;
+            case JRUBY_PLUGIN_API:
+            case NON_APPLICABLE:
+            default:
+                break;
+        }
+        for (ClassEnumOrInterface cur : staticallyGeneratedClasses) {
+            generateStaticClass(cur.getName(), outputDir);
+        }
+    }
+
+    @Override
     protected void completeGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
+        classes.addAll(staticallyGeneratedClasses);
         generateRubyRequireFile(classes, outputDir, mode);
     }
 

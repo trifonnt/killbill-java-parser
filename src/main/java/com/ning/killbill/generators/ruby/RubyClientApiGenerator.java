@@ -30,7 +30,7 @@ public class RubyClientApiGenerator extends RubyBaseGenerator {
     }
 
     @Override
-    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir) throws GeneratorException {
+    protected void startGeneration(final List<ClassEnumOrInterface> classes, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
     }
 
     @Override
