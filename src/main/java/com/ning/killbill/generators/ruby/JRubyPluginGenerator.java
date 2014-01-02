@@ -408,7 +408,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                     // First convert to DateTime
                     writeWithIndentationAndNewLine(memberPrefix + member + " = " + "Java::org.joda.time.DateTime.new(" + memberPrefix + member + ")", w, INDENT_LEVEL);
                 }
-                writeWithIndentationAndNewLine("fmt = Java::org.joda.time.format.ISODateTimeFormat.date_time", w, ("java.util.Date".equals(returnValueType) ? 0 : INDENT_LEVEL));
+                writeWithIndentationAndNewLine("fmt = Java::org.joda.time.format.ISODateTimeFormat.date_time_no_millis # See https://github.com/killbill/killbill-java-parser/issues/3", w, ("java.util.Date".equals(returnValueType) ? 0 : INDENT_LEVEL));
                 writeWithIndentationAndNewLine("str = fmt.print(" + memberPrefix + member + ")", w, 0);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = " + "DateTime.iso8601(str)", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
