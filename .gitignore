@@ -8,6 +8,7 @@ staging
 overlays
 examples
 pom.xml.releaseBackup
+dependency-reduced-pom.xml
 release.properties
 logs/
 .diskspool
