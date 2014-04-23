@@ -227,7 +227,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeWithIndentationAndNewLine("message = \"#{message}\\n#{e.backtrace.join(\"\\n\")}\"", w, +INDENT_LEVEL);
         writeWithIndentationAndNewLine("end", w, +-INDENT_LEVEL);
         writeWithIndentationAndNewLine("logger.warn message", w, +0);
-        writeWithIndentationAndNewLine("raise Java::com.ning.billing.payment.plugin.api.PaymentPluginApiException.new(\"" + methodName + " failure\", e.message)", w, 0);
+        writeWithIndentationAndNewLine("raise Java::org.killbill.billing.payment.plugin.api.PaymentPluginApiException.new(\"" + methodName + " failure\", e.message)", w, 0);
         writeWithIndentationAndNewLine("ensure", w, -INDENT_LEVEL);
         writeWithIndentationAndNewLine("@delegate_plugin.after_request", w, INDENT_LEVEL);
         writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
