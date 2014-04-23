@@ -568,7 +568,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine(memberPrefix + member + " = Java::org.joda.time.DateTimeZone.forID((" + memberPrefix + member + ".respond_to?(:identifier) ? " + memberPrefix + member + ".identifier : " + memberPrefix + member + ".to_s))", w, INDENT_LEVEL);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else if ("java.util.List".equals(returnValueType) ||
-                    "java.util.Collection".equals(returnValueType)) {
+                       "java.util.Collection".equals(returnValueType) ||
+                       "java.lang.Iterable".equals(returnValueType)) {
                 writeWithIndentationAndNewLine("tmp = java.util.ArrayList.new", w, 0);
                 writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                 writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, "");
