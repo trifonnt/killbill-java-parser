@@ -429,6 +429,13 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine("tmp << m", w, 0);
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
+            } else if ("java.lang.Iterable".equals(returnValueType)) {
+                writeWithIndentationAndNewLine("tmp = []", w, 0);
+                writeWithIndentationAndNewLine("(" + memberPrefix + member + ".nil? ? [] : " + memberPrefix + member + ".iterator).each do |m|", w, 0);
+                writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
+                writeWithIndentationAndNewLine("tmp << m", w, 0);
+                writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+                writeWithIndentationAndNewLine(memberPrefix + member + " = tmp", w, 0);
             } else if ("java.util.Iterator".equals(returnValueType)) {
                 // TODO
                 // Leave default where ruby can call next, not ideal because that would break pure ruby plugin code
