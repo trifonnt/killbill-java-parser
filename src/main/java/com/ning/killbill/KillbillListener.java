@@ -37,6 +37,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -860,8 +861,34 @@ public class KillbillListener extends JavaBaseListener {
         bracketPartIfAny = m.group(2);
 
         final String resolvedBaseType = resolveNonBracketedType(baseType);
-        final String resolvedBracketPartIfAny = bracketPartIfAny != null ? resolveNonBracketedType(bracketPartIfAny) : null;
-        return new Type(resolvedBaseType, resolvedBracketPartIfAny);
+
+        final String resolvedBracketPartIfAny;
+        final List<Type> genericSubTypes = new LinkedList<Type>();
+        if (bracketPartIfAny != null && bracketPartIfAny.contains(",")) {
+            // resolvedBracketPartIfAny is something like "String,List<Integer>"
+            resolvedBracketPartIfAny = null;
+
+            for (final String genericSubType : bracketPartIfAny.split(",")) {
+                final Type qualifiedType;
+                if (isGenericType(genericSubType)) {
+                    qualifiedType = getFullyQualifiedType(genericSubType);
+                } else {
+                    qualifiedType = new Type(resolveNonBracketedType(genericSubType), null);
+                }
+                genericSubTypes.add(qualifiedType);
+            }
+        } else if (bracketPartIfAny != null) {
+            resolvedBracketPartIfAny = resolveNonBracketedType(bracketPartIfAny);
+        } else {
+            resolvedBracketPartIfAny = null;
+        }
+
+        return new Type(resolvedBaseType, resolvedBracketPartIfAny, genericSubTypes);
+    }
+
+    private boolean isGenericType(final String type) {
+        Matcher m = KillbillListener.GENERIC_PATTERN.matcher(type);
+        return m.matches();
     }
 
     /**

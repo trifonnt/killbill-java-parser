@@ -16,6 +16,9 @@
 
 package com.ning.billing.overdue;
 
+import java.util.List;
+import java.util.Map;
+
 import com.ning.billing.junction.api.Blockable;
 import com.ning.billing.overdue.config.api.BillingState;
 import com.ning.billing.overdue.config.api.OverdueException;
@@ -32,4 +35,5 @@ public interface OverdueUserApi {
 
     public <T extends Blockable> BillingState<T> getBillingStateFor(T overdueable, TenantContext context) throws OverdueException;
 
+    public Map<String, List<Integer>> getMap();
 }

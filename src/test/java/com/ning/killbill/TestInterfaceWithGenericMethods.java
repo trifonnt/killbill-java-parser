@@ -1,23 +1,20 @@
 package com.ning.killbill;
 
-import java.util.List;
-
+import com.ning.killbill.objects.ClassEnumOrInterface;
 import com.ning.killbill.objects.MethodOrDecl;
 import org.testng.annotations.Test;
 
-import com.ning.killbill.objects.ClassEnumOrInterface;
+import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 public class TestInterfaceWithGenericMethods extends TestBase {
 
-
     @Test(groups = "fast")
     public void testInterfaceWithGenericMethods() {
-
-
         assertEquals(listener.getPackageName(), "com.ning.billing.overdue");
         final List<ClassEnumOrInterface> classesorInterfaces = listener.getAllClassesEnumOrInterfaces();
         assertEquals(classesorInterfaces.size(), 1);
@@ -25,7 +22,7 @@ public class TestInterfaceWithGenericMethods extends TestBase {
         final ClassEnumOrInterface testClass = classesorInterfaces.get(0);
         assertEquals(testClass.getName(), "OverdueUserApi");
         assertEquals(testClass.isInterface(), true);
-        assertEquals(testClass.getMethodOrDecls().size(), 4);
+        assertEquals(testClass.getMethodOrDecls().size(), 5);
 
         MethodOrDecl refreshOverdueStateFor = getMethod("refreshOverdueStateFor", testClass.getMethodOrDecls());
         assertNotNull(refreshOverdueStateFor);
@@ -53,6 +50,14 @@ public class TestInterfaceWithGenericMethods extends TestBase {
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(2).getName(), "context");
         assertEquals(setOverrideBillingStateForAccount.getOrderedArguments().get(2).getType().getBaseType(), "com.ning.billing.util.callcontext.CallContext");
 
+        MethodOrDecl getMap = getMethod("getMap", testClass.getMethodOrDecls());
+        assertNotNull(getMap);
+        assertEquals(getMap.getReturnValueType().getBaseType(), "java.util.Map");
+        assertEquals(getMap.getReturnValueType().getGenericSubTypes().size(), 2);
+        assertEquals(getMap.getReturnValueType().getGenericSubTypes().get(0).getBaseType(), "java.lang.String");
+        assertNull(getMap.getReturnValueType().getGenericSubTypes().get(0).getGenericType());
+        assertEquals(getMap.getReturnValueType().getGenericSubTypes().get(1).getBaseType(), "java.util.List");
+        assertEquals(getMap.getReturnValueType().getGenericSubTypes().get(1).getGenericType(), "java.lang.Integer");
     }
 
     @Override
