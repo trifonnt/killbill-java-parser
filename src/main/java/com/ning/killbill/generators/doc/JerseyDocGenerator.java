@@ -109,7 +109,7 @@ public class JerseyDocGenerator extends BaseGenerator implements Generator {
             Annotation httpVerbAnnotation = getHttpMethodAnnotation(m.getAnnotations());
             generateAsciiDoctorAPIResource(cur, m, pathPrefix, httpVerbAnnotation.getName(), queryParams, writer);
             final Field jsonField = getJsonFieldIfExists(m, httpVerbAnnotation.getName());
-            if (jsonField != null) {
+            if (jsonField != null && jsonField.getType().getBaseType().startsWith("org.killbill")) {
                 jsonFields.add(jsonField);
             }
         }
