@@ -381,8 +381,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
 
         writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + type.toString() + "]", w, indentOffset);
 
-        // See https://github.com/killbill/killbill-java-parser/issues/6
-        final boolean shouldIgnore = "plan".equals(member) && obj != null && "PlanPhase".equals(obj.getName());
+        // See https://github.com/killbill/killbill-java-parser/issues/6 and https://github.com/killbill/killbill-java-parser/issues/7
+        final boolean shouldIgnore = obj != null && (("plan".equals(member) && "PlanPhase".equals(obj.getName())) ||
+                                                     ("min_top_up_credit".equals(member) && "TieredBlock".equals(obj.getName())));
         final String linePrefix = shouldIgnore ? "#" : "";
 
         final String memberPrefix = fromJobj ? "@" : "";
