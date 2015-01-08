@@ -278,7 +278,11 @@ public class KillbillListener extends JavaBaseListener {
 
         final String returnValueType = (ctx.type().primitiveType() != null) ? ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
         final int arrayLevel = CharMatcher.is('[').countIn(ctx.type().getText());
-        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType, arrayLevel), true, currentNonParameterAnnotations);
+        final boolean hasParameters = ctx.interfaceMethodOrFieldRest() != null &&
+                                      ctx.interfaceMethodOrFieldRest().interfaceMethodDeclaratorRest() != null &&
+                                      ctx.interfaceMethodOrFieldRest().interfaceMethodDeclaratorRest().formalParameters() != null &&
+                                      !"()".equals(ctx.interfaceMethodOrFieldRest().interfaceMethodDeclaratorRest().formalParameters().getText());
+        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType, arrayLevel), true, currentNonParameterAnnotations, hasParameters);
     }
 
     @Override
