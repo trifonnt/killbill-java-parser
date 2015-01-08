@@ -381,7 +381,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
 
         final String memberPrefix = fromJobj ? "@" : "";
         if (fromJobj) {
-            writeWithIndentationAndNewLine(memberPrefix + member + " = j_obj." + member, w, 0);
+            final String hackedMember = member.equals("included") && "org.killbill.billing.catalog.api.Product[]".equals(type.toString()) ? "get_" + member : member;
+            writeWithIndentationAndNewLine(memberPrefix + member + " = j_obj." + hackedMember, w, 0);
         }
 
         if (returnValueType.equals("byte")) {
