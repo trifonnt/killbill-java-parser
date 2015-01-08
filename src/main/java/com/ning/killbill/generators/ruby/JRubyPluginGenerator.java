@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
+import javax.annotation.Nullable;
+
 public class JRubyPluginGenerator extends RubyBaseGenerator {
 
     private final static String LICENSE_NAME = "RubyLicense.txt";
@@ -257,7 +259,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeNewLine(w);
         // conversion
         if (!isVoidReturn) {
-            writeConversionToRuby("res", m.getReturnValueType(), allClasses, w, 0, false);
+            writeConversionToRuby(null, "res", m.getReturnValueType(), allClasses, w, 0, false);
             writeWithIndentationAndNewLine("return res", w, 0);
         }
 
@@ -285,7 +287,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             if (mode == GENERATOR_MODE.JRUBY_API) {
                 writeConversionToJava(f.getName(), f.getType(), allClasses, w, curIndentLevel, "");
             } else if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API) {
-                writeConversionToRuby(f.getName(), f.getType(), allClasses, w, curIndentLevel, false);
+                writeConversionToRuby(null, f.getName(), f.getType(), allClasses, w, curIndentLevel, false);
             }
             firstArg = false;
         }
@@ -348,11 +350,11 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 continue;
             }
             if (first) {
-                writeConversionToRuby(m, allClasses, w, INDENT_LEVEL);
+                writeConversionToRuby(obj, m, allClasses, w, INDENT_LEVEL);
                 first = false;
             } else {
                 writeNewLine(w);
-                writeConversionToRuby(m, allClasses, w, 0);
+                writeConversionToRuby(obj, m, allClasses, w, 0);
             }
         }
         writeWithIndentationAndNewLine("self", w, 0);
@@ -360,29 +362,34 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         writeNewLine(w);
     }
 
-    private void writeConversionToRuby(final MethodOrDecl m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
+    private void writeConversionToRuby(@Nullable final ClassEnumOrInterface obj, final MethodOrDecl m, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset) throws GeneratorException, IOException {
         final String member = camelToUnderscore(convertGetterMethodToFieldName(m.getName()));
-        writeConversionToRuby(member, m.getReturnValueType(), allClasses, w, indentOffset, true);
+        writeConversionToRuby(obj, member, m.getReturnValueType(), allClasses, w, indentOffset, true);
     }
 
 
-    private void writeConversionToRuby(final String member, final String returnValueType, final String returnValueGeneric, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj) throws GeneratorException, IOException {
-        writeConversionToRuby(member, new Type(returnValueType, returnValueGeneric), allClasses, w, indentOffset, fromJobj);
+    private void writeConversionToRuby(@Nullable final ClassEnumOrInterface obj, final String member, final String returnValueType, final String returnValueGeneric, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj) throws GeneratorException, IOException {
+        writeConversionToRuby(obj, member, new Type(returnValueType, returnValueGeneric), allClasses, w, indentOffset, fromJobj);
     }
 
-    private void writeConversionToRuby(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj) throws GeneratorException, IOException {
-        writeConversionToRuby(member, type, allClasses, w, indentOffset, fromJobj, 0);
+    private void writeConversionToRuby(@Nullable final ClassEnumOrInterface obj, final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj) throws GeneratorException, IOException {
+        writeConversionToRuby(obj, member, type, allClasses, w, indentOffset, fromJobj, 0);
     }
-    private void writeConversionToRuby(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj, int depth) throws GeneratorException, IOException {
+    private void writeConversionToRuby(@Nullable final ClassEnumOrInterface obj, final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, boolean fromJobj, int depth) throws GeneratorException, IOException {
         final String returnValueType = type.getBaseType();
         final String returnValueGeneric = type.getGenericType();
 
         writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + type.toString() + "]", w, indentOffset);
 
+        // See https://github.com/killbill/killbill-java-parser/issues/6
+        final boolean shouldIgnore = "plan".equals(member) && obj != null && "PlanPhase".equals(obj.getName());
+        final String linePrefix = shouldIgnore ? "#" : "";
+
         final String memberPrefix = fromJobj ? "@" : "";
         if (fromJobj) {
+            // See https://github.com/killbill/killbill-java-parser/issues/5
             final String hackedMember = member.equals("included") && "org.killbill.billing.catalog.api.Product[]".equals(type.toString()) ? "get_" + member : member;
-            writeWithIndentationAndNewLine(memberPrefix + member + " = j_obj." + hackedMember, w, 0);
+            writeWithIndentationAndNewLine(linePrefix + memberPrefix + member + " = j_obj." + hackedMember, w, 0);
         }
 
         if (returnValueType.equals("byte")) {
@@ -436,14 +443,14 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                         Type.ARRAY.equals(returnValueType)) {
                     writeWithIndentationAndNewLine(tmp + " = []", w, 0);
                     writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
-                    writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
+                    writeConversionToRuby(obj, "m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
                     writeWithIndentationAndNewLine(tmp + " << m", w, 0);
                     writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                     writeWithIndentationAndNewLine(memberPrefix + member + " = " + tmp, w, 0);
                 } else if ("java.lang.Iterable".equals(returnValueType)) {
                     writeWithIndentationAndNewLine(tmp + " = []", w, 0);
                     writeWithIndentationAndNewLine("(" + memberPrefix + member + ".nil? ? [] : " + memberPrefix + member + ".iterator).each do |m|", w, 0);
-                    writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
+                    writeConversionToRuby(obj, "m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
                     writeWithIndentationAndNewLine(tmp + " << m", w, 0);
                     writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                     writeWithIndentationAndNewLine(memberPrefix + member + " = " + tmp, w, 0);
@@ -456,9 +463,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                     writeWithIndentationAndNewLine(jtmp + " = " + memberPrefix + member + " || java.util.HashMap.new", w, 0);
                     writeWithIndentationAndNewLine(jtmp + ".key_set.each do |k|", w, 0);
                     if (type.getGenericSubTypes() != null && type.getGenericSubTypes().size() == 2) {
-                        writeConversionToRuby("k", type.getGenericSubTypes().get(0), allClasses, w, INDENT_LEVEL, false, depth + 1);
+                        writeConversionToRuby(obj, "k", type.getGenericSubTypes().get(0), allClasses, w, INDENT_LEVEL, false, depth + 1);
                         writeWithIndentationAndNewLine("v = " + jtmp + ".get(k)", w, 0);
-                        writeConversionToRuby("v", type.getGenericSubTypes().get(1), allClasses, w, INDENT_LEVEL, false, depth + 1);
+                        writeConversionToRuby(obj, "v", type.getGenericSubTypes().get(1), allClasses, w, INDENT_LEVEL, false, depth + 1);
                     } else {
                         // No generic information? Should we bail or trust JRuby to do the right thing?
                         writeWithIndentationAndNewLine("v = " + "j" + tmp + depth + ".get(k)", w, 0);
@@ -471,7 +478,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                     if (classEnumOrInterface.isEnum()) {
                         writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_s.to_sym unless " + memberPrefix + member + ".nil?", w, 0);
                     } else {
-                        writeWithIndentationAndNewLine(memberPrefix + member + " = " + getJrubyPoJo(returnValueType) + ".new.to_ruby(" + memberPrefix + member + ") unless " + memberPrefix + member + ".nil?", w, 0);
+                        writeWithIndentationAndNewLine(linePrefix + memberPrefix + member + " = " + getJrubyPoJo(returnValueType) + ".new.to_ruby(" + memberPrefix + member + ") unless " + memberPrefix + member + ".nil?", w, 0);
                     }
                 }
             }
