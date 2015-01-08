@@ -1,5 +1,21 @@
 package com.ning.killbill;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.ning.killbill.JavaParser.ClassDeclarationContext;
 import com.ning.killbill.JavaParser.ClassOrInterfaceModifierContext;
@@ -28,20 +44,6 @@ import com.ning.killbill.objects.Field;
 import com.ning.killbill.objects.MethodCtorOrDecl;
 import com.ning.killbill.objects.MethodOrDecl;
 import com.ning.killbill.objects.Type;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class KillbillListener extends JavaBaseListener {
 
@@ -275,7 +277,8 @@ public class KillbillListener extends JavaBaseListener {
         log.debug("** Entering enterInterfaceMethodOrFieldDecl" + ctx.getText());
 
         final String returnValueType = (ctx.type().primitiveType() != null) ? ctx.type().primitiveType().getText() : ctx.type().classOrInterfaceType().getText();
-        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType), true, currentNonParameterAnnotations);
+        final int arrayLevel = CharMatcher.is('[').countIn(ctx.type().getText());
+        currentMethodCtorOrDecl = new MethodOrDecl(ctx.Identifier().getText(), getFullyQualifiedType(returnValueType, arrayLevel), true, currentNonParameterAnnotations);
     }
 
     @Override
@@ -841,6 +844,10 @@ public class KillbillListener extends JavaBaseListener {
         return false;
     }
 
+    private Type getFullyQualifiedType(final String type) {
+        return getFullyQualifiedType(type, 0);
+    }
+
     /**
      * - Generic simple type, e.g : List<String>
      * - Generic fully qualified type, e.g : List<java.lang.String>
@@ -850,7 +857,7 @@ public class KillbillListener extends JavaBaseListener {
      * @param type the string type extracted from the parser
      * @return the Type computed
      */
-    private Type getFullyQualifiedType(final String type) {
+    private Type getFullyQualifiedType(final String type, final int arrayLevel) {
         String baseType;
         String bracketPartIfAny = null;
         Matcher m = KillbillListener.GENERIC_PATTERN.matcher(type);
@@ -883,7 +890,13 @@ public class KillbillListener extends JavaBaseListener {
             resolvedBracketPartIfAny = null;
         }
 
-        return new Type(resolvedBaseType, resolvedBracketPartIfAny, genericSubTypes);
+        if (arrayLevel == 0) {
+            return new Type(resolvedBaseType, resolvedBracketPartIfAny, genericSubTypes);
+        } else if (arrayLevel == 1) {
+            return new Type(Type.ARRAY, resolvedBaseType, genericSubTypes);
+        } else {
+            throw new UnsupportedOperationException("arrayLevel = " + arrayLevel + " for type = " + type);
+        }
     }
 
     private boolean isGenericType(final String type) {

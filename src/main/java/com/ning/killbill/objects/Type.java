@@ -5,6 +5,8 @@ import java.util.List;
 
 public class Type {
 
+    public static final String ARRAY = "ARRAY";
+
     private final String baseType;
     private final String genericType;
     private final List<Type> genericSubTypes;
@@ -38,10 +40,10 @@ public class Type {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Type{");
-        sb.append("baseType='").append(baseType).append('\'');
-        sb.append(", genericType='").append(genericType).append('\'');
-        sb.append('}');
-        return sb.toString();
+        if (ARRAY.equals(baseType)) {
+            return genericType + "[]";
+        } else {
+            return baseType;
+        }
     }
 }

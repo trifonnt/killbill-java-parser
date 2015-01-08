@@ -377,7 +377,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         final String returnValueType = type.getBaseType();
         final String returnValueGeneric = type.getGenericType();
 
-        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + returnValueType + "]", w, indentOffset);
+        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + type.toString() + "]", w, indentOffset);
 
         final String memberPrefix = fromJobj ? "@" : "";
         if (fromJobj) {
@@ -431,7 +431,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                     writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
                 } else if ("java.util.List".equals(returnValueType) ||
                         "java.util.Collection".equals(returnValueType) ||
-                        "java.util.Set".equals(returnValueType)) {
+                        "java.util.Set".equals(returnValueType) ||
+                        Type.ARRAY.equals(returnValueType)) {
                     writeWithIndentationAndNewLine(tmp + " = []", w, 0);
                     writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                     writeConversionToRuby("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, false);
@@ -543,7 +544,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         final String returnValueType = type.getBaseType();
         final String returnValueGeneric = type.getGenericType();
 
-        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + returnValueType + "]", w, indentOffset);
+        writeWithIndentationAndNewLine("# conversion for " + member + " [type = " + type.toString() + "]", w, indentOffset);
         if (returnValueType.equals("byte")) {
             // default jruby conversion should be fine
         } else if (returnValueType.equals("short") || returnValueType.equals("java.lang.Short")) {
@@ -602,7 +603,14 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
             } else {
                 final String tmp = depth == 0 ? "tmp" : "tmp" + depth;
-                if ("java.util.List".equals(returnValueType) ||
+                if (Type.ARRAY.equals(returnValueType)) {
+                    writeWithIndentationAndNewLine(tmp + " = java.util.ArrayList.new", w, 0);
+                    writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
+                    writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, "");
+                    writeWithIndentationAndNewLine(tmp + ".add(m)", w, 0);
+                    writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
+                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + tmp + ".toArray", w, 0);
+                } else if ("java.util.List".equals(returnValueType) ||
                            "java.util.Collection".equals(returnValueType) ||
                            "java.lang.Iterable".equals(returnValueType)) {
                     writeWithIndentationAndNewLine(tmp + " = java.util.ArrayList.new", w, 0);
