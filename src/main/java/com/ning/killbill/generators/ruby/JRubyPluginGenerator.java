@@ -665,7 +665,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
                 } else {
                     final ClassEnumOrInterface classEnumOrIfce = findClassEnumOrInterface(returnValueType, allClasses);
                     if (classEnumOrIfce.isEnum()) {
-                        writeWithIndentationAndNewLine(memberPrefix + member + " = Java::" + classEnumOrIfce.getFullName() + ".value_of(\"#{" + memberPrefix + member + ".to_s}\") unless " + memberPrefix + member + ".nil?", w, 0);
+                        writeWithIndentationAndNewLine(memberPrefix + member + " = " + enumValueOf(classEnumOrIfce, member, memberPrefix) + " unless " + memberPrefix + member + ".nil?", w, 0);
                     } else {
                         writeWithIndentationAndNewLine(memberPrefix + member + " = " + memberPrefix + member + ".to_java unless " + memberPrefix + member + ".nil?", w, 0);
                     }
@@ -674,6 +674,10 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
     }
 
+    private static CharSequence enumValueOf(final ClassEnumOrInterface enumType, final String member, final String memberPrefix) {
+        // e.g. Java::org.killbill.billing.catalog.api.Currency.value_of( @currency.to_s )
+        return "Java::" + enumType.getFullName() + ".value_of( " + memberPrefix + member + ".to_s )";
+    }
 
     private void dedupPreserveOrder(final List<MethodOrDecl> flattenedMethods) {
 
