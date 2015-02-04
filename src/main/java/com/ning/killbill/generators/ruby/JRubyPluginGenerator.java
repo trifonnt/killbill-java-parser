@@ -549,6 +549,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     private void writeConversionToJava(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, String memberPrefix) throws GeneratorException, IOException {
         writeConversionToJava(member, type, allClasses, w, indentOffset, memberPrefix, 0);
     }
+
     private void writeConversionToJava(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, String memberPrefix, int depth) throws GeneratorException, IOException {
         final String returnValueType = type.getBaseType();
         final String returnValueGeneric = type.getGenericType();
@@ -664,7 +665,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
 
     private static CharSequence enumValueOf(final ClassEnumOrInterface enumType, final String member, final String memberPrefix) {
         // e.g. Java::org.killbill.billing.catalog.api.Currency.value_of( @currency.to_s )
-        return "Java::" + enumType.getFullName() + ".value_of( " + memberPrefix + member + ".to_s )";
+        //return "Java::" + enumType.getFullName() + ".value_of( " + memberPrefix + member + ".to_s )";
+        // e.g. Java::JavaLang::Enum.value_of( org.xxx.Currency.java_class, @currency.to_s )
+        return "Java::JavaLang::Enum.value_of( " + enumType.getFullName()  + ".java_class, " + memberPrefix + member + ".to_s )";
     }
 
     private void dedupPreserveOrder(final List<MethodOrDecl> flattenedMethods) {
