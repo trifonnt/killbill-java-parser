@@ -39,6 +39,9 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     private final String[] POJO_MODULES = {"Killbill", "Plugin", "Model"};
     private final String[] API_MODULES = {"Killbill", "Plugin", "Api"};
 
+    private final String NOTIFICATION_PLUGIN_API = "NotificationPluginApi";
+    private final String JPLUGIN = "JPlugin";
+
     private static final List<ClassEnumOrInterface> STATICALLY_API_GENERATED_CLASSES = ImmutableList.<ClassEnumOrInterface>builder()
             .add(new ClassEnumOrInterface("EnumeratorIterator", ClassEnumOrInterface.ClassEnumOrInterfaceType.CLASS, null, null, false))
             .build();
@@ -74,6 +77,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         }
     }
 
+
+
     @Override
     protected void generateClass(final ClassEnumOrInterface obj, final List<ClassEnumOrInterface> allClasses, final File outputDir, final GENERATOR_MODE mode) throws GeneratorException {
 
@@ -92,6 +97,12 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             final boolean isInterface = obj.isInterface();
             final boolean isApi = isInterface && isApiFile(obj.getName());
 
+            final boolean isPureNotificationPluginApi = isApi && obj.getName().equals(NOTIFICATION_PLUGIN_API);
+
+            if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API && isApi && !isPureNotificationPluginApi) {
+                writeWithIndentationAndNewLine("require 'killbill/gen/plugin-api/notification_plugin_api'", w, 0);
+            }
+
             generateStartModules(w, isApi);
 
             final List<MethodOrDecl> flattenedMethods = new ArrayList<MethodOrDecl>();
@@ -109,7 +120,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             }
 
             if (mode == GENERATOR_MODE.JRUBY_PLUGIN_API && isApi) {
-                writeWithIndentationAndNewLine("class " + obj.getName() + " < JPlugin", w, curIndent);
+                final String baseClass = isPureNotificationPluginApi ? JPLUGIN : NOTIFICATION_PLUGIN_API;
+                writeWithIndentationAndNewLine("class " + obj.getName() + " < " + baseClass, w, curIndent);
             } else {
                 writeWithIndentationAndNewLine("class " + obj.getName(), w, curIndent);
             }
@@ -511,7 +523,7 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
         //
         // If this is a class, that sucks because we can't rely on the jruby layer to map the Jruby object to a valid java object based on the include mechanism
         // so we new to explicitely call the CTOR of that class.
-        // TODO There is a hack here we assumes that CTOR takes all the fields as arguments is the correct order. We should realy fix our API to not have those cases
+        // TODO There is a hack here we assumes that CTOR takes all the fields as arguments is the correct order. We should really fix our API to not have those cases
         // or be smarter in the conversion process and loo at the CTOR arguments into more details
         if (obj.isClass()) {
             writeWithIndentation("Java::" + obj.getPackageName() + "." + obj.getName() + ".new(", w, 0);
