@@ -561,6 +561,8 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
     private void writeConversionToJava(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, String memberPrefix) throws GeneratorException, IOException {
         writeConversionToJava(member, type, allClasses, w, indentOffset, memberPrefix, 0);
     }
+
+
     private void writeConversionToJava(final String member, final Type type, final List<ClassEnumOrInterface> allClasses, final Writer w, int indentOffset, String memberPrefix, int depth) throws GeneratorException, IOException {
         final String returnValueType = type.getBaseType();
         final String returnValueGeneric = type.getGenericType();
@@ -625,12 +627,17 @@ public class JRubyPluginGenerator extends RubyBaseGenerator {
             } else {
                 final String tmp = depth == 0 ? "tmp" : "tmp" + depth;
                 if (Type.ARRAY.equals(returnValueType)) {
-                    writeWithIndentationAndNewLine(tmp + " = java.util.ArrayList.new", w, 0);
+                    //
+                    // We have to use a strategy a bit different here to avoid getting TypeError (coerce). Instead of adding elements into a
+                    // java.util.ArrayList, we use a ruby array, and that allows us to use the 'to_java method with the Java type' as indicated
+                    // in the doc (https://github.com/jruby/jruby/wiki/CallingJavaFromJRuby#arrays)
+                    //
+                    writeWithIndentationAndNewLine(tmp + " = []", w, 0);
                     writeWithIndentationAndNewLine("(" + memberPrefix + member + " || []).each do |m|", w, 0);
                     writeConversionToJava("m", returnValueGeneric, null, allClasses, w, INDENT_LEVEL, "");
-                    writeWithIndentationAndNewLine(tmp + ".add(m)", w, 0);
+                    writeWithIndentationAndNewLine(tmp + " << m", w, 0);
                     writeWithIndentationAndNewLine("end", w, -INDENT_LEVEL);
-                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + tmp + ".toArray", w, 0);
+                    writeWithIndentationAndNewLine(memberPrefix + member + " = " + tmp + ".to_java Java::" + returnValueGeneric, w, 0);
                 } else if ("java.util.List".equals(returnValueType) ||
                            "java.util.Collection".equals(returnValueType) ||
                            "java.lang.Iterable".equals(returnValueType)) {
