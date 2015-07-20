@@ -54,8 +54,8 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>src</sourceDirectory>
-        <outputDirectory>target</outputDirectory>
+        <!--sourceDirectory>src</sourceDirectory>
+        <outputDirectory>target</outputDirectory-->
 
         <plugins>
             <plugin>
@@ -63,8 +63,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>6</source>
-                    <target>6</target>
+                    <!--source>1.7</source>
+                    <target>1.7</target-->
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
                     <compilerArguments>
@@ -98,7 +98,7 @@
                 <version>4.0</version>
                 <configuration>
                   <sourceDirectory>src/main/java</sourceDirectory>
-                   <outputDirectory>target/generated-sources/antlr4</outputDirectory>
+                  <outputDirectory>target/generated-sources/antlr4</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -144,4 +144,3 @@
         </plugins>
     </build>
 </project>
-

@@ -12,8 +12,6 @@ dependency-reduced-pom.xml
 release.properties
 logs/
 .diskspool
-*.classpath
 *.settings
-*.project
 */bin/
 */test-output/

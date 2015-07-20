@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/killbill-java-parser/src/main/java/com/ning/killbill/KillbillParser.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ning.killbill.KillbillParser"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-i file:////opt/workspace-eclipse-openshift-d3soft-killbill015/killbillsrc015/jaxrs/src/main/java/org/ -o /tmp/output -t PHP_CLIENT_API -p org.killbill.billing.jaxrs.json"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="killbill-java-parser"/>
+</launchConfiguration>
